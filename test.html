@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width" name="viewport">
+    <meta content="Accessible custom `&lt;select&gt;` (and `&lt;input list&gt;`) element." name="description">
+    <title>Number Picker</title>
+    <link href="index.min.css" rel="stylesheet">
+    <style>
+      .number-picker__text {
+        min-width: 1.25em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p><input max="25" min="0" step="1" type="number"></p>
+    </main>
+    <script src="index.min.js"></script>
+    <script>
+      const picker = new NumberPicker(document.querySelector('input'));
+      picker.on('max.number', function (current, max) {
+          console.error({
+              current,
+              max
+          });
+      });
+      picker.on('min.number', function (current, min) {
+          console.error({
+              current,
+              min
+          });
+      });
+    </script>
+  </body>
+</html>

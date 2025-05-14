@@ -1,2 +1,2 @@
 # number-picker
-Accessible custom `&lt;input type="number">` element.
+Accessible custom `<input type="number">` element.

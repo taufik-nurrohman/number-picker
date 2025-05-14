@@ -1,0 +1,141 @@
+$name: 'number-picker';
+
+%item {
+  align-items: center;
+  border: 1px solid;
+  border-color: inherit;
+  display: flex;
+  gap: 0.25em;
+  padding: 0 0.25em;
+}
+
+%items {
+  border-color: inherit;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding: 1px;
+}
+
+.#{$name} {
+  &,
+  & * {
+    box-sizing: border-box;
+    color: inherit;
+    font: inherit;
+    outline: 0;
+  }
+}
+
+.#{$name} {
+  border: 1px solid;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  position: relative;
+  user-select: none;
+  vertical-align: middle;
+  &[aria-disabled='true'] {
+    color: rgba(128, 128, 128);
+    cursor: not-allowed;
+    * {
+      pointer-events: none;
+    }
+  }
+  &__step,
+  &__text {
+    @extend %item;
+    overflow: hidden;
+    position: relative;
+  }
+  &__flex {
+    @extend %items;
+    flex: 1;
+    overflow: hidden;
+  }
+  &__self {
+    background: 0 0;
+    border-radius: 0;
+    border: 0;
+    bottom: 0;
+    box-shadow: none;
+    color: transparent;
+    font: 0/0 a;
+    height: 1px;
+    left: 0;
+    margin: 0;
+    opacity: 0;
+    outline: 0;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    text-shadow: none;
+    width: 1px;
+  }
+  &__step-batch {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  &__text {
+    border-color: transparent;
+    cursor: text;
+    flex: 1;
+    user-select: text;
+    span {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+      &:empty {
+        &::after {
+          content: '\200c';
+        }
+      }
+      * {
+        display: inline; // Remove (hide) line-break in text box
+      }
+      br {
+        display: none;
+      }
+      + span {
+        bottom: 0;
+        left: 0;
+        opacity: 0.5;
+        padding: inherit;
+        position: absolute;
+        right: 0;
+        top: 0;
+        white-space: nowrap;
+        z-index: 0;
+      }
+    }
+  }
+}
+
+.number-picker__step {
+  flex: 1;
+  &:focus {
+    outline: 1px solid;
+    outline-offset: -2px;
+  }
+}
+
+.number-picker__step::after {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  border: 0 solid transparent;
+  border-width: 0 0.25em;
+}
+
+.number-picker__step:first-child::after {
+  border-bottom-width: 0.25em;
+  border-bottom-color: inherit;
+}
+
+.number-picker__step:last-child::after {
+  border-top-width: 0.25em;
+  border-top-color: inherit;
+}

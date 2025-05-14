@@ -1,0 +1,58 @@
+{
+  "author": "Taufik Nurrohman",
+  "browser": "index.min.js",
+  "bugs": "https://github.com/taufik-nurrohman/number-picker/issues",
+  "dependencies": {
+    "@taufik-nurrohman/document": "^1.5.1",
+    "@taufik-nurrohman/event": "^1.0.1",
+    "@taufik-nurrohman/f": "^1.3.0",
+    "@taufik-nurrohman/from": "^1.1.0",
+    "@taufik-nurrohman/has": "^1.0.0",
+    "@taufik-nurrohman/hook": "^1.2.2",
+    "@taufik-nurrohman/is": "^1.0.4",
+    "@taufik-nurrohman/pattern": "^1.0.1",
+    "@taufik-nurrohman/rect": "^1.0.0",
+    "@taufik-nurrohman/selection": "^1.1.0",
+    "@taufik-nurrohman/tick": "^1.0.1",
+    "@taufik-nurrohman/to": "^1.2.0"
+  },
+  "description": "Accessible custom `<input type=\"number\">` element.",
+  "devDependencies": {
+    "@taufik-nurrohman/factory": "^2.2.4"
+  },
+  "exports": {
+    "import": "./index.mjs",
+    "require": "./index.js"
+  },
+  "files": [
+    "index.css",
+    "index.min.css",
+    "index.scss",
+    "index.js",
+    "index.min.js",
+    "index.mjs"
+  ],
+  "funding": {
+    "url": "https://paypal.me/tatautaufik"
+  },
+  "homepage": "https://taufik-nurrohman.js.org/number-picker",
+  "keywords": [
+    "a11y",
+    "cycle",
+    "native",
+    "number",
+    "picker"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "module": "index.mjs",
+  "name": "@taufik-nurrohman/number-picker",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taufik-nurrohman/number-picker.git"
+  },
+  "scripts": {
+    "pack": "pack --clean=false --from=.factory --js-format=umd --js-name=NumberPicker --js-top='%(js.license)' --mjs=true --scss=true --to=."
+  },
+  "version": "1.0.0"
+}

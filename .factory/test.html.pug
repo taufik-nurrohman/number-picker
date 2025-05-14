@@ -1,0 +1,28 @@
+extends _index.pug
+
+block state
+  - const scripts = ['index.min.js']
+  - const styles = ['index.min.css']
+  - const title = 'Number Picker'
+
+block script
+  script
+    | const picker = new NumberPicker(document.querySelector('input'));
+    |
+    | picker.on('max.number', function (current, max) {
+    |     console.error({current, max});
+    | });
+    |
+    | picker.on('min.number', function (current, min) {
+    |     console.error({current, min});
+    | });
+
+block style
+  style
+    | .number-picker__text {
+    |   min-width: 1.25em;
+    | }
+
+block content
+  main
+    p: input(max='25' min='0' step='1' type='number')

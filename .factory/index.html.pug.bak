@@ -1,0 +1,2114 @@
+extends _index.pug
+
+block state
+  - const scripts = ['index.min.js']
+  - const styles = ['../layout/index.min.css', '../layout/anchor/index.min.css', 'index.min.css']
+  - const theme = '#000'
+  - const title = 'Option Picker ' + version
+
+block script
+  script
+    | const picker = new OptionPicker(document.forms[0].country);
+    |
+    | picker.on('change', value => console.log(value));
+
+block style
+  style
+    | body {
+    |   margin-left: auto;
+    |   margin-right: auto;
+    |   max-width: 60rem;
+    | }
+    | .option-picker {
+    |   border-width: 2px;
+    |   flex: 1;
+    | }
+    | .option-picker__arrow,
+    | .option-picker__text,
+    | .option-picker__value {
+    |   border-width: 0;
+    |   gap: 0;
+    |   padding: 0 0.5em;
+    | }
+    | .option-picker:focus-within {
+    |   border-color: #00f;
+    | }
+    | .option-picker:focus-within .option-picker__options {
+    |   border-color: #00f;
+    | }
+    | .option-picker:focus-within .option-picker__value {
+    |   background: 0 0;
+    |   outline: 0;
+    | }
+    | .option-picker__option {
+    |   border: 0;
+    |   gap: 0;
+    |   padding: 0 0.5em;
+    | }
+    | .option-picker__option:focus,
+    | .option-picker__option:hover {
+    |   outline: 0;
+    | }
+    | .option-picker__option[aria-selected='true'] {
+    |   background: #000;
+    |   color: #fff;
+    |   outline: 0;
+    | }
+    | .option-picker__option:where(:not([aria-disabled='true'])):hover {
+    |   background: #00f;
+    |   color: #fff;
+    | }
+    | .option-picker__options {
+    |   background: #fff;
+    |   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    |   gap: 0;
+    |   left: -2px;
+    |   min-width: calc(100% + 4px);
+    |   padding: 0;
+    | }
+    | .option-picker__options:not(:hover) .option-picker__option:where(:not([aria-disabled='true'])):focus {
+    |   background: #00f;
+    |   color: #fff;
+    | }
+    | .option-picker__options:hover .option-picker__option:where(:not([aria-disabled='true']):not([aria-selected='true']):not(:hover)):focus {
+    |   background: #eee;
+    | }
+    | .option-picker__options-batch {
+    |   border: 0;
+    |   gap: 0;
+    |   padding: 0;
+    | }
+    | .option-picker__options-batch:not(:first-child) {
+    |   border-top: 2px solid;
+    |   border-top-color: inherit;
+    | }
+    | .option-picker__options-batch::before {
+    |   background: #eef;
+    |   border: 0;
+    |   padding: 0 0.5em;
+    | }
+    | .option-picker__values {
+    |   padding: 0;
+    | }
+    | .option-picker[data-size] .option-picker__options {
+    |   box-shadow: none;
+    | }
+    | .option-picker[data-size] .option-picker__values {
+    |   border-bottom: 2px solid;
+    |   border-color: inherit;
+    | }
+    |
+    | .option-picker__option[value]::before,
+    | .option-picker__value[value]::before {
+    |   content: '🏴‍☠️';
+    |   margin-right: 0.5em;
+    | }
+    | .option-picker__option[value='AF']::before,
+    | .option-picker__value[value='AF']::before {
+    |   content: '🇦🇫';
+    | }
+    | .option-picker__option[value='AX']::before,
+    | .option-picker__value[value='AX']::before {
+    |   content: '🇦🇽';
+    | }
+    | .option-picker__option[value='AL']::before,
+    | .option-picker__value[value='AL']::before {
+    |   content: '🇦🇱';
+    | }
+    | .option-picker__option[value='DZ']::before,
+    | .option-picker__value[value='DZ']::before {
+    |   content: '🇩🇿';
+    | }
+    | .option-picker__option[value='AS']::before,
+    | .option-picker__value[value='AS']::before {
+    |   content: '🇦🇸';
+    | }
+    | .option-picker__option[value='AD']::before,
+    | .option-picker__value[value='AD']::before {
+    |   content: '🇦🇩';
+    | }
+    | .option-picker__option[value='AO']::before,
+    | .option-picker__value[value='AO']::before {
+    |   content: '🇦🇴';
+    | }
+    | .option-picker__option[value='AI']::before,
+    | .option-picker__value[value='AI']::before {
+    |   content: '🇦🇮';
+    | }
+    | .option-picker__option[value='AQ']::before,
+    | .option-picker__value[value='AQ']::before {
+    |   content: '🇦🇶';
+    | }
+    | .option-picker__option[value='AG']::before,
+    | .option-picker__value[value='AG']::before {
+    |   content: '🇦🇬';
+    | }
+    | .option-picker__option[value='AR']::before,
+    | .option-picker__value[value='AR']::before {
+    |   content: '🇦🇷';
+    | }
+    | .option-picker__option[value='AM']::before,
+    | .option-picker__value[value='AM']::before {
+    |   content: '🇦🇲';
+    | }
+    | .option-picker__option[value='AW']::before,
+    | .option-picker__value[value='AW']::before {
+    |   content: '🇦🇼';
+    | }
+    | .option-picker__option[value='AU']::before,
+    | .option-picker__value[value='AU']::before {
+    |   content: '🇦🇺';
+    | }
+    | .option-picker__option[value='AT']::before,
+    | .option-picker__value[value='AT']::before {
+    |   content: '🇦🇹';
+    | }
+    | .option-picker__option[value='AZ']::before,
+    | .option-picker__value[value='AZ']::before {
+    |   content: '🇦🇿';
+    | }
+    | .option-picker__option[value='BS']::before,
+    | .option-picker__value[value='BS']::before {
+    |   content: '🇧🇸';
+    | }
+    | .option-picker__option[value='BH']::before,
+    | .option-picker__value[value='BH']::before {
+    |   content: '🇧🇭';
+    | }
+    | .option-picker__option[value='BD']::before,
+    | .option-picker__value[value='BD']::before {
+    |   content: '🇧🇩';
+    | }
+    | .option-picker__option[value='BB']::before,
+    | .option-picker__value[value='BB']::before {
+    |   content: '🇧🇧';
+    | }
+    | .option-picker__option[value='BY']::before,
+    | .option-picker__value[value='BY']::before {
+    |   content: '🇧🇾';
+    | }
+    | .option-picker__option[value='BE']::before,
+    | .option-picker__value[value='BE']::before {
+    |   content: '🇧🇪';
+    | }
+    | .option-picker__option[value='BZ']::before,
+    | .option-picker__value[value='BZ']::before {
+    |   content: '🇧🇿';
+    | }
+    | .option-picker__option[value='BJ']::before,
+    | .option-picker__value[value='BJ']::before {
+    |   content: '🇧🇯';
+    | }
+    | .option-picker__option[value='BM']::before,
+    | .option-picker__value[value='BM']::before {
+    |   content: '🇧🇲';
+    | }
+    | .option-picker__option[value='BT']::before,
+    | .option-picker__value[value='BT']::before {
+    |   content: '🇧🇹';
+    | }
+    | .option-picker__option[value='BO']::before,
+    | .option-picker__value[value='BO']::before {
+    |   content: '🇧🇴';
+    | }
+    | .option-picker__option[value='BA']::before,
+    | .option-picker__value[value='BA']::before {
+    |   content: '🇧🇦';
+    | }
+    | .option-picker__option[value='BW']::before,
+    | .option-picker__value[value='BW']::before {
+    |   content: '🇧🇼';
+    | }
+    | .option-picker__option[value='BV']::before,
+    | .option-picker__value[value='BV']::before {
+    |   content: '🏳';
+    | }
+    | .option-picker__option[value='BR']::before,
+    | .option-picker__value[value='BR']::before {
+    |   content: '🇧🇷';
+    | }
+    | .option-picker__option[value='IO']::before,
+    | .option-picker__value[value='IO']::before {
+    |   content: '🇮🇴';
+    | }
+    | .option-picker__option[value='BN']::before,
+    | .option-picker__value[value='BN']::before {
+    |   content: '🇧🇳';
+    | }
+    | .option-picker__option[value='BG']::before,
+    | .option-picker__value[value='BG']::before {
+    |   content: '🇧🇬';
+    | }
+    | .option-picker__option[value='BF']::before,
+    | .option-picker__value[value='BF']::before {
+    |   content: '🇧🇫';
+    | }
+    | .option-picker__option[value='BI']::before,
+    | .option-picker__value[value='BI']::before {
+    |   content: '🇧🇮';
+    | }
+    | .option-picker__option[value='KH']::before,
+    | .option-picker__value[value='KH']::before {
+    |   content: '🇰🇭';
+    | }
+    | .option-picker__option[value='CM']::before,
+    | .option-picker__value[value='CM']::before {
+    |   content: '🇨🇲';
+    | }
+    | .option-picker__option[value='CA']::before,
+    | .option-picker__value[value='CA']::before {
+    |   content: '🇨🇦';
+    | }
+    | .option-picker__option[value='CV']::before,
+    | .option-picker__value[value='CV']::before {
+    |   content: '🇨🇻';
+    | }
+    | .option-picker__option[value='KY']::before,
+    | .option-picker__value[value='KY']::before {
+    |   content: '🇰🇾';
+    | }
+    | .option-picker__option[value='CF']::before,
+    | .option-picker__value[value='CF']::before {
+    |   content: '🇨🇫';
+    | }
+    | .option-picker__option[value='TD']::before,
+    | .option-picker__value[value='TD']::before {
+    |   content: '🇹🇩';
+    | }
+    | .option-picker__option[value='CL']::before,
+    | .option-picker__value[value='CL']::before {
+    |   content: '🇨🇱';
+    | }
+    | .option-picker__option[value='CN']::before,
+    | .option-picker__value[value='CN']::before {
+    |   content: '🇨🇳';
+    | }
+    | .option-picker__option[value='CX']::before,
+    | .option-picker__value[value='CX']::before {
+    |   content: '🇨🇽';
+    | }
+    | .option-picker__option[value='CC']::before,
+    | .option-picker__value[value='CC']::before {
+    |   content: '🇨🇨';
+    | }
+    | .option-picker__option[value='CO']::before,
+    | .option-picker__value[value='CO']::before {
+    |   content: '🇨🇴';
+    | }
+    | .option-picker__option[value='KM']::before,
+    | .option-picker__value[value='KM']::before {
+    |   content: '🇰🇲';
+    | }
+    | .option-picker__option[value='CG']::before,
+    | .option-picker__value[value='CG']::before {
+    |   content: '🇨🇬';
+    | }
+    | .option-picker__option[value='CD']::before,
+    | .option-picker__value[value='CD']::before {
+    |   content: '🇨🇩';
+    | }
+    | .option-picker__option[value='CK']::before,
+    | .option-picker__value[value='CK']::before {
+    |   content: '🇨🇰';
+    | }
+    | .option-picker__option[value='CR']::before,
+    | .option-picker__value[value='CR']::before {
+    |   content: '🇨🇷';
+    | }
+    | .option-picker__option[value='CI']::before,
+    | .option-picker__value[value='CI']::before {
+    |   content: '🇨🇮';
+    | }
+    | .option-picker__option[value='HR']::before,
+    | .option-picker__value[value='HR']::before {
+    |   content: '🇭🇷';
+    | }
+    | .option-picker__option[value='CU']::before,
+    | .option-picker__value[value='CU']::before {
+    |   content: '🇨🇺';
+    | }
+    | .option-picker__option[value='CY']::before,
+    | .option-picker__value[value='CY']::before {
+    |   content: '🇨🇾';
+    | }
+    | .option-picker__option[value='CZ']::before,
+    | .option-picker__value[value='CZ']::before {
+    |   content: '🇨🇿';
+    | }
+    | .option-picker__option[value='DK']::before,
+    | .option-picker__value[value='DK']::before {
+    |   content: '🇩🇰';
+    | }
+    | .option-picker__option[value='DJ']::before,
+    | .option-picker__value[value='DJ']::before {
+    |   content: '🇩🇯';
+    | }
+    | .option-picker__option[value='DM']::before,
+    | .option-picker__value[value='DM']::before {
+    |   content: '🇩🇲';
+    | }
+    | .option-picker__option[value='DO']::before,
+    | .option-picker__value[value='DO']::before {
+    |   content: '🇨🇩';
+    | }
+    | .option-picker__option[value='EC']::before,
+    | .option-picker__value[value='EC']::before {
+    |   content: '🇪🇨';
+    | }
+    | .option-picker__option[value='EG']::before,
+    | .option-picker__value[value='EG']::before {
+    |   content: '🇪🇬';
+    | }
+    | .option-picker__option[value='SV']::before,
+    | .option-picker__value[value='SV']::before {
+    |   content: '🇸🇻';
+    | }
+    | .option-picker__option[value='GQ']::before,
+    | .option-picker__value[value='GQ']::before {
+    |   content: '🇬🇶';
+    | }
+    | .option-picker__option[value='ER']::before,
+    | .option-picker__value[value='ER']::before {
+    |   content: '🇪🇷';
+    | }
+    | .option-picker__option[value='EE']::before,
+    | .option-picker__value[value='EE']::before {
+    |   content: '🇪🇪';
+    | }
+    | .option-picker__option[value='ET']::before,
+    | .option-picker__value[value='ET']::before {
+    |   content: '🇪🇹';
+    | }
+    | .option-picker__option[value='FK']::before,
+    | .option-picker__value[value='FK']::before {
+    |   content: '🇫🇰';
+    | }
+    | .option-picker__option[value='FO']::before,
+    | .option-picker__value[value='FO']::before {
+    |   content: '🇫🇴';
+    | }
+    | .option-picker__option[value='FJ']::before,
+    | .option-picker__value[value='FJ']::before {
+    |   content: '🇫🇯';
+    | }
+    | .option-picker__option[value='FI']::before,
+    | .option-picker__value[value='FI']::before {
+    |   content: '🇫🇮';
+    | }
+    | .option-picker__option[value='FR']::before,
+    | .option-picker__value[value='FR']::before {
+    |   content: '🇫🇷';
+    | }
+    | .option-picker__option[value='GF']::before,
+    | .option-picker__value[value='GF']::before {
+    |   content: '🇬🇫';
+    | }
+    | .option-picker__option[value='PF']::before,
+    | .option-picker__value[value='PF']::before {
+    |   content: '🇵🇫';
+    | }
+    | .option-picker__option[value='TF']::before,
+    | .option-picker__value[value='TF']::before {
+    |   content: '🇹🇫';
+    | }
+    | .option-picker__option[value='GA']::before,
+    | .option-picker__value[value='GA']::before {
+    |   content: '🇬🇦';
+    | }
+    | .option-picker__option[value='GM']::before,
+    | .option-picker__value[value='GM']::before {
+    |   content: '🇬🇲';
+    | }
+    | .option-picker__option[value='GE']::before,
+    | .option-picker__value[value='GE']::before {
+    |   content: '🇬🇪';
+    | }
+    | .option-picker__option[value='DE']::before,
+    | .option-picker__value[value='DE']::before {
+    |   content: '🇩🇪';
+    | }
+    | .option-picker__option[value='GH']::before,
+    | .option-picker__value[value='GH']::before {
+    |   content: '🇬🇭';
+    | }
+    | .option-picker__option[value='GI']::before,
+    | .option-picker__value[value='GI']::before {
+    |   content: '🇬🇮';
+    | }
+    | .option-picker__option[value='GR']::before,
+    | .option-picker__value[value='GR']::before {
+    |   content: '🇬🇷';
+    | }
+    | .option-picker__option[value='GL']::before,
+    | .option-picker__value[value='GL']::before {
+    |   content: '🇬🇱';
+    | }
+    | .option-picker__option[value='GD']::before,
+    | .option-picker__value[value='GD']::before {
+    |   content: '🇬🇩';
+    | }
+    | .option-picker__option[value='GP']::before,
+    | .option-picker__value[value='GP']::before {
+    |   content: '🇬🇵';
+    | }
+    | .option-picker__option[value='GU']::before,
+    | .option-picker__value[value='GU']::before {
+    |   content: '🇬🇺';
+    | }
+    | .option-picker__option[value='GT']::before,
+    | .option-picker__value[value='GT']::before {
+    |   content: '🇬🇹';
+    | }
+    | .option-picker__option[value='GG']::before,
+    | .option-picker__value[value='GG']::before {
+    |   content: '🇬🇬';
+    | }
+    | .option-picker__option[value='GN']::before,
+    | .option-picker__value[value='GN']::before {
+    |   content: '🇬🇳';
+    | }
+    | .option-picker__option[value='GW']::before,
+    | .option-picker__value[value='GW']::before {
+    |   content: '🇬🇼';
+    | }
+    | .option-picker__option[value='GY']::before,
+    | .option-picker__value[value='GY']::before {
+    |   content: '🇬🇾';
+    | }
+    | .option-picker__option[value='HT']::before,
+    | .option-picker__value[value='HT']::before {
+    |   content: '🇭🇹';
+    | }
+    | .option-picker__option[value='HM']::before,
+    | .option-picker__value[value='HM']::before {
+    |   content: '🏳';
+    | }
+    | .option-picker__option[value='VA']::before,
+    | .option-picker__value[value='VA']::before {
+    |   content: '🇻🇦';
+    | }
+    | .option-picker__option[value='HN']::before,
+    | .option-picker__value[value='HN']::before {
+    |   content: '🇭🇳';
+    | }
+    | .option-picker__option[value='HK']::before,
+    | .option-picker__value[value='HK']::before {
+    |   content: '🇭🇰';
+    | }
+    | .option-picker__option[value='HU']::before,
+    | .option-picker__value[value='HU']::before {
+    |   content: '🇭🇺';
+    | }
+    | .option-picker__option[value='IS']::before,
+    | .option-picker__value[value='IS']::before {
+    |   content: '🇮🇸';
+    | }
+    | .option-picker__option[value='IN']::before,
+    | .option-picker__value[value='IN']::before {
+    |   content: '🇮🇳';
+    | }
+    | .option-picker__option[value='ID']::before,
+    | .option-picker__value[value='ID']::before {
+    |   content: '🇮🇩';
+    | }
+    | .option-picker__option[value='IR']::before,
+    | .option-picker__value[value='IR']::before {
+    |   content: '🇮🇷';
+    | }
+    | .option-picker__option[value='IQ']::before,
+    | .option-picker__value[value='IQ']::before {
+    |   content: '🇮🇶';
+    | }
+    | .option-picker__option[value='IE']::before,
+    | .option-picker__value[value='IE']::before {
+    |   content: '🇮🇪';
+    | }
+    | .option-picker__option[value='IM']::before,
+    | .option-picker__value[value='IM']::before {
+    |   content: '🇮🇲';
+    | }
+    | .option-picker__option[value='IL']::before,
+    | .option-picker__value[value='IL']::before {
+    |   content: '🇮🇱';
+    | }
+    | .option-picker__option[value='IT']::before,
+    | .option-picker__value[value='IT']::before {
+    |   content: '🇮🇹';
+    | }
+    | .option-picker__option[value='JM']::before,
+    | .option-picker__value[value='JM']::before {
+    |   content: '🇯🇲';
+    | }
+    | .option-picker__option[value='JP']::before,
+    | .option-picker__value[value='JP']::before {
+    |   content: '🇯🇵';
+    | }
+    | .option-picker__option[value='JE']::before,
+    | .option-picker__value[value='JE']::before {
+    |   content: '🇯🇪';
+    | }
+    | .option-picker__option[value='JO']::before,
+    | .option-picker__value[value='JO']::before {
+    |   content: '🇯🇴';
+    | }
+    | .option-picker__option[value='KZ']::before,
+    | .option-picker__value[value='KZ']::before {
+    |   content: '🇰🇿';
+    | }
+    | .option-picker__option[value='KE']::before,
+    | .option-picker__value[value='KE']::before {
+    |   content: '🇰🇪';
+    | }
+    | .option-picker__option[value='KI']::before,
+    | .option-picker__value[value='KI']::before {
+    |   content: '🇰🇮';
+    | }
+    | .option-picker__option[value='KP']::before,
+    | .option-picker__value[value='KP']::before {
+    |   content: '🇰🇵';
+    | }
+    | .option-picker__option[value='KR']::before,
+    | .option-picker__value[value='KR']::before {
+    |   content: '🇰🇷';
+    | }
+    | .option-picker__option[value='XK']::before,
+    | .option-picker__value[value='XK']::before {
+    |   content: '🇽🇰';
+    | }
+    | .option-picker__option[value='KW']::before,
+    | .option-picker__value[value='KW']::before {
+    |   content: '🇰🇼';
+    | }
+    | .option-picker__option[value='KG']::before,
+    | .option-picker__value[value='KG']::before {
+    |   content: '🇰🇬';
+    | }
+    | .option-picker__option[value='LA']::before,
+    | .option-picker__value[value='LA']::before {
+    |   content: '🇱🇦';
+    | }
+    | .option-picker__option[value='LV']::before,
+    | .option-picker__value[value='LV']::before {
+    |   content: '🇱🇻';
+    | }
+    | .option-picker__option[value='LB']::before,
+    | .option-picker__value[value='LB']::before {
+    |   content: '🇱🇧';
+    | }
+    | .option-picker__option[value='LS']::before,
+    | .option-picker__value[value='LS']::before {
+    |   content: '🇱🇸';
+    | }
+    | .option-picker__option[value='LR']::before,
+    | .option-picker__value[value='LR']::before {
+    |   content: '🇱🇷';
+    | }
+    | .option-picker__option[value='LY']::before,
+    | .option-picker__value[value='LY']::before {
+    |   content: '🇱🇾';
+    | }
+    | .option-picker__option[value='LI']::before,
+    | .option-picker__value[value='LI']::before {
+    |   content: '🇱🇮';
+    | }
+    | .option-picker__option[value='LT']::before,
+    | .option-picker__value[value='LT']::before {
+    |   content: '🇱🇹';
+    | }
+    | .option-picker__option[value='LU']::before,
+    | .option-picker__value[value='LU']::before {
+    |   content: '🇱🇺';
+    | }
+    | .option-picker__option[value='MO']::before,
+    | .option-picker__value[value='MO']::before {
+    |   content: '🇲🇴';
+    | }
+    | .option-picker__option[value='MK']::before,
+    | .option-picker__value[value='MK']::before {
+    |   content: '🇲🇰';
+    | }
+    | .option-picker__option[value='MG']::before,
+    | .option-picker__value[value='MG']::before {
+    |   content: '🇲🇬';
+    | }
+    | .option-picker__option[value='MW']::before,
+    | .option-picker__value[value='MW']::before {
+    |   content: '🇲🇼';
+    | }
+    | .option-picker__option[value='MY']::before,
+    | .option-picker__value[value='MY']::before {
+    |   content: '🇲🇾';
+    | }
+    | .option-picker__option[value='MV']::before,
+    | .option-picker__value[value='MV']::before {
+    |   content: '🇲🇻';
+    | }
+    | .option-picker__option[value='ML']::before,
+    | .option-picker__value[value='ML']::before {
+    |   content: '🇲🇱';
+    | }
+    | .option-picker__option[value='MT']::before,
+    | .option-picker__value[value='MT']::before {
+    |   content: '🇲🇹';
+    | }
+    | .option-picker__option[value='MH']::before,
+    | .option-picker__value[value='MH']::before {
+    |   content: '🇲🇭';
+    | }
+    | .option-picker__option[value='MQ']::before,
+    | .option-picker__value[value='MQ']::before {
+    |   content: '🇲🇶';
+    | }
+    | .option-picker__option[value='MR']::before,
+    | .option-picker__value[value='MR']::before {
+    |   content: '🇲🇷';
+    | }
+    | .option-picker__option[value='MU']::before,
+    | .option-picker__value[value='MU']::before {
+    |   content: '🇲🇺';
+    | }
+    | .option-picker__option[value='YT']::before,
+    | .option-picker__value[value='YT']::before {
+    |   content: '🇾🇹';
+    | }
+    | .option-picker__option[value='MX']::before,
+    | .option-picker__value[value='MX']::before {
+    |   content: '🇲🇽';
+    | }
+    | .option-picker__option[value='FM']::before,
+    | .option-picker__value[value='FM']::before {
+    |   content: '🇫🇲';
+    | }
+    | .option-picker__option[value='MD']::before,
+    | .option-picker__value[value='MD']::before {
+    |   content: '🇲🇩';
+    | }
+    | .option-picker__option[value='MC']::before,
+    | .option-picker__value[value='MC']::before {
+    |   content: '🇲🇨';
+    | }
+    | .option-picker__option[value='MN']::before,
+    | .option-picker__value[value='MN']::before {
+    |   content: '🇲🇳';
+    | }
+    | .option-picker__option[value='ME']::before,
+    | .option-picker__value[value='ME']::before {
+    |   content: '🇲🇪';
+    | }
+    | .option-picker__option[value='MS']::before,
+    | .option-picker__value[value='MS']::before {
+    |   content: '🇲🇸';
+    | }
+    | .option-picker__option[value='MA']::before,
+    | .option-picker__value[value='MA']::before {
+    |   content: '🇲🇦';
+    | }
+    | .option-picker__option[value='MZ']::before,
+    | .option-picker__value[value='MZ']::before {
+    |   content: '🇲🇿';
+    | }
+    | .option-picker__option[value='MM']::before,
+    | .option-picker__value[value='MM']::before {
+    |   content: '🇲🇲';
+    | }
+    | .option-picker__option[value='NA']::before,
+    | .option-picker__value[value='NA']::before {
+    |   content: '🇳🇦';
+    | }
+    | .option-picker__option[value='NR']::before,
+    | .option-picker__value[value='NR']::before {
+    |   content: '🇳🇷';
+    | }
+    | .option-picker__option[value='NP']::before,
+    | .option-picker__value[value='NP']::before {
+    |   content: '🇳🇵';
+    | }
+    | .option-picker__option[value='NL']::before,
+    | .option-picker__value[value='NL']::before {
+    |   content: '🇳🇱';
+    | }
+    | .option-picker__option[value='AN']::before,
+    | .option-picker__value[value='AN']::before {
+    |   content: '🇳🇱';
+    | }
+    | .option-picker__option[value='NC']::before,
+    | .option-picker__value[value='NC']::before {
+    |   content: '🇳🇨';
+    | }
+    | .option-picker__option[value='NZ']::before,
+    | .option-picker__value[value='NZ']::before {
+    |   content: '🇳🇿';
+    | }
+    | .option-picker__option[value='NI']::before,
+    | .option-picker__value[value='NI']::before {
+    |   content: '🇳🇮';
+    | }
+    | .option-picker__option[value='NE']::before,
+    | .option-picker__value[value='NE']::before {
+    |   content: '🇳🇪';
+    | }
+    | .option-picker__option[value='NG']::before,
+    | .option-picker__value[value='NG']::before {
+    |   content: '🇳🇬';
+    | }
+    | .option-picker__option[value='NU']::before,
+    | .option-picker__value[value='NU']::before {
+    |   content: '🇳🇺';
+    | }
+    | .option-picker__option[value='NF']::before,
+    | .option-picker__value[value='NF']::before {
+    |   content: '🇳🇫';
+    | }
+    | .option-picker__option[value='MP']::before,
+    | .option-picker__value[value='MP']::before {
+    |   content: '🏳';
+    | }
+    | .option-picker__option[value='NO']::before,
+    | .option-picker__value[value='NO']::before {
+    |   content: '🇳🇴';
+    | }
+    | .option-picker__option[value='OM']::before,
+    | .option-picker__value[value='OM']::before {
+    |   content: '🇴🇲';
+    | }
+    | .option-picker__option[value='PK']::before,
+    | .option-picker__value[value='PK']::before {
+    |   content: '🇵🇰';
+    | }
+    | .option-picker__option[value='PW']::before,
+    | .option-picker__value[value='PW']::before {
+    |   content: '🇵🇼';
+    | }
+    | .option-picker__option[value='PS']::before,
+    | .option-picker__value[value='PS']::before {
+    |   content: '🇵🇸';
+    | }
+    | .option-picker__option[value='PA']::before,
+    | .option-picker__value[value='PA']::before {
+    |   content: '🇵🇦';
+    | }
+    | .option-picker__option[value='PG']::before,
+    | .option-picker__value[value='PG']::before {
+    |   content: '🇵🇬';
+    | }
+    | .option-picker__option[value='PY']::before,
+    | .option-picker__value[value='PY']::before {
+    |   content: '🇵🇾';
+    | }
+    | .option-picker__option[value='PE']::before,
+    | .option-picker__value[value='PE']::before {
+    |   content: '🇵🇪';
+    | }
+    | .option-picker__option[value='PH']::before,
+    | .option-picker__value[value='PH']::before {
+    |   content: '🇵🇭';
+    | }
+    | .option-picker__option[value='PN']::before,
+    | .option-picker__value[value='PN']::before {
+    |   content: '🇵🇳';
+    | }
+    | .option-picker__option[value='PL']::before,
+    | .option-picker__value[value='PL']::before {
+    |   content: '🇵🇱';
+    | }
+    | .option-picker__option[value='PT']::before,
+    | .option-picker__value[value='PT']::before {
+    |   content: '🇵🇹';
+    | }
+    | .option-picker__option[value='PR']::before,
+    | .option-picker__value[value='PR']::before {
+    |   content: '🇵🇷';
+    | }
+    | .option-picker__option[value='QA']::before,
+    | .option-picker__value[value='QA']::before {
+    |   content: '🇶🇦';
+    | }
+    | .option-picker__option[value='RO']::before,
+    | .option-picker__value[value='RO']::before {
+    |   content: '🇷🇴';
+    | }
+    | .option-picker__option[value='RU']::before,
+    | .option-picker__value[value='RU']::before {
+    |   content: '🇷🇺';
+    | }
+    | .option-picker__option[value='RW']::before,
+    | .option-picker__value[value='RW']::before {
+    |   content: '🇷🇼';
+    | }
+    | .option-picker__option[value='RE']::before,
+    | .option-picker__value[value='RE']::before {
+    |   content: '🇫🇷';
+    | }
+    | .option-picker__option[value='BL']::before,
+    | .option-picker__value[value='BL']::before {
+    |   content: '🇧🇱';
+    | }
+    | .option-picker__option[value='SH']::before,
+    | .option-picker__value[value='SH']::before {
+    |   content: '🇸🇭';
+    | }
+    | .option-picker__option[value='KN']::before,
+    | .option-picker__value[value='KN']::before {
+    |   content: '🇰🇳';
+    | }
+    | .option-picker__option[value='LC']::before,
+    | .option-picker__value[value='LC']::before {
+    |   content: '🇱🇨';
+    | }
+    | .option-picker__option[value='MF']::before,
+    | .option-picker__value[value='MF']::before {
+    |   content: '🏳';
+    | }
+    | .option-picker__option[value='PM']::before,
+    | .option-picker__value[value='PM']::before {
+    |   content: '🇵🇲';
+    | }
+    | .option-picker__option[value='VC']::before,
+    | .option-picker__value[value='VC']::before {
+    |   content: '🇻🇨';
+    | }
+    | .option-picker__option[value='WS']::before,
+    | .option-picker__value[value='WS']::before {
+    |   content: '🇼🇸';
+    | }
+    | .option-picker__option[value='SM']::before,
+    | .option-picker__value[value='SM']::before {
+    |   content: '🇸🇲';
+    | }
+    | .option-picker__option[value='ST']::before,
+    | .option-picker__value[value='ST']::before {
+    |   content: '🇸🇹';
+    | }
+    | .option-picker__option[value='SA']::before,
+    | .option-picker__value[value='SA']::before {
+    |   content: '🇸🇦';
+    | }
+    | .option-picker__option[value='SN']::before,
+    | .option-picker__value[value='SN']::before {
+    |   content: '🇸🇳';
+    | }
+    | .option-picker__option[value='RS']::before,
+    | .option-picker__value[value='RS']::before {
+    |   content: '🇷🇸';
+    | }
+    | .option-picker__option[value='SC']::before,
+    | .option-picker__value[value='SC']::before {
+    |   content: '🇸🇨';
+    | }
+    | .option-picker__option[value='SL']::before,
+    | .option-picker__value[value='SL']::before {
+    |   content: '🇸🇱';
+    | }
+    | .option-picker__option[value='SG']::before,
+    | .option-picker__value[value='SG']::before {
+    |   content: '🇸🇬';
+    | }
+    | .option-picker__option[value='SK']::before,
+    | .option-picker__value[value='SK']::before {
+    |   content: '🇸🇰';
+    | }
+    | .option-picker__option[value='SI']::before,
+    | .option-picker__value[value='SI']::before {
+    |   content: '🇸🇮';
+    | }
+    | .option-picker__option[value='SB']::before,
+    | .option-picker__value[value='SB']::before {
+    |   content: '🇸🇧';
+    | }
+    | .option-picker__option[value='SO']::before,
+    | .option-picker__value[value='SO']::before {
+    |   content: '🇸🇴';
+    | }
+    | .option-picker__option[value='ZA']::before,
+    | .option-picker__value[value='ZA']::before {
+    |   content: '🇿🇦';
+    | }
+    | .option-picker__option[value='SS']::before,
+    | .option-picker__value[value='SS']::before {
+    |   content: '🇸🇸';
+    | }
+    | .option-picker__option[value='GS']::before,
+    | .option-picker__value[value='GS']::before {
+    |   content: '🇬🇸';
+    | }
+    | .option-picker__option[value='ES']::before,
+    | .option-picker__value[value='ES']::before {
+    |   content: '🇪🇸';
+    | }
+    | .option-picker__option[value='LK']::before,
+    | .option-picker__value[value='LK']::before {
+    |   content: '🇱🇰';
+    | }
+    | .option-picker__option[value='SD']::before,
+    | .option-picker__value[value='SD']::before {
+    |   content: '🇸🇩';
+    | }
+    | .option-picker__option[value='SR']::before,
+    | .option-picker__value[value='SR']::before {
+    |   content: '🇸🇷';
+    | }
+    | .option-picker__option[value='SJ']::before,
+    | .option-picker__value[value='SJ']::before {
+    |   content: '🇩🇰';
+    | }
+    | .option-picker__option[value='SZ']::before,
+    | .option-picker__value[value='SZ']::before {
+    |   content: '🇸🇿';
+    | }
+    | .option-picker__option[value='SE']::before,
+    | .option-picker__value[value='SE']::before {
+    |   content: '🇸🇪';
+    | }
+    | .option-picker__option[value='CH']::before,
+    | .option-picker__value[value='CH']::before {
+    |   content: '🇨🇭';
+    | }
+    | .option-picker__option[value='SY']::before,
+    | .option-picker__value[value='SY']::before {
+    |   content: '🇸🇾';
+    | }
+    | .option-picker__option[value='TW']::before,
+    | .option-picker__value[value='TW']::before {
+    |   content: '🇹🇼';
+    | }
+    | .option-picker__option[value='TJ']::before,
+    | .option-picker__value[value='TJ']::before {
+    |   content: '🇹🇯';
+    | }
+    | .option-picker__option[value='TZ']::before,
+    | .option-picker__value[value='TZ']::before {
+    |   content: '🇹🇿';
+    | }
+    | .option-picker__option[value='TH']::before,
+    | .option-picker__value[value='TH']::before {
+    |   content: '🇹🇭';
+    | }
+    | .option-picker__option[value='TL']::before,
+    | .option-picker__value[value='TL']::before {
+    |   content: '🇹🇱';
+    | }
+    | .option-picker__option[value='TG']::before,
+    | .option-picker__value[value='TG']::before {
+    |   content: '🇹🇬';
+    | }
+    | .option-picker__option[value='TK']::before,
+    | .option-picker__value[value='TK']::before {
+    |   content: '🇹🇰';
+    | }
+    | .option-picker__option[value='TO']::before,
+    | .option-picker__value[value='TO']::before {
+    |   content: '🇹🇴';
+    | }
+    | .option-picker__option[value='TT']::before,
+    | .option-picker__value[value='TT']::before {
+    |   content: '🇹🇹';
+    | }
+    | .option-picker__option[value='TN']::before,
+    | .option-picker__value[value='TN']::before {
+    |   content: '🇹🇳';
+    | }
+    | .option-picker__option[value='TR']::before,
+    | .option-picker__value[value='TR']::before {
+    |   content: '🇹🇷';
+    | }
+    | .option-picker__option[value='TM']::before,
+    | .option-picker__value[value='TM']::before {
+    |   content: '🇹🇲';
+    | }
+    | .option-picker__option[value='TC']::before,
+    | .option-picker__value[value='TC']::before {
+    |   content: '🇹🇨';
+    | }
+    | .option-picker__option[value='TV']::before,
+    | .option-picker__value[value='TV']::before {
+    |   content: '🇹🇻';
+    | }
+    | .option-picker__option[value='UG']::before,
+    | .option-picker__value[value='UG']::before {
+    |   content: '🇺🇬';
+    | }
+    | .option-picker__option[value='UA']::before,
+    | .option-picker__value[value='UA']::before {
+    |   content: '🇺🇦';
+    | }
+    | .option-picker__option[value='AE']::before,
+    | .option-picker__value[value='AE']::before {
+    |   content: '🇦🇪';
+    | }
+    | .option-picker__option[value='GB']::before,
+    | .option-picker__value[value='GB']::before {
+    |   content: '🇬🇧';
+    | }
+    | .option-picker__option[value='US']::before,
+    | .option-picker__value[value='US']::before {
+    |   content: '🇺🇸';
+    | }
+    | .option-picker__option[value='UY']::before,
+    | .option-picker__value[value='UY']::before {
+    |   content: '🇺🇾';
+    | }
+    | .option-picker__option[value='UZ']::before,
+    | .option-picker__value[value='UZ']::before {
+    |   content: '🇺🇿';
+    | }
+    | .option-picker__option[value='VU']::before,
+    | .option-picker__value[value='VU']::before {
+    |   content: '🇻🇺';
+    | }
+    | .option-picker__option[value='VE']::before,
+    | .option-picker__value[value='VE']::before {
+    |   content: '🇻🇪';
+    | }
+    | .option-picker__option[value='VN']::before,
+    | .option-picker__value[value='VN']::before {
+    |   content: '🇻🇳';
+    | }
+    | .option-picker__option[value='VG']::before,
+    | .option-picker__value[value='VG']::before {
+    |   content: '🇻🇬';
+    | }
+    | .option-picker__option[value='VI']::before,
+    | .option-picker__value[value='VI']::before {
+    |   content: '🇻🇮';
+    | }
+    | .option-picker__option[value='WF']::before,
+    | .option-picker__value[value='WF']::before {
+    |   content: '🇼🇫';
+    | }
+    | .option-picker__option[value='YE']::before,
+    | .option-picker__value[value='YE']::before {
+    |   content: '🇾🇪';
+    | }
+    | .option-picker__option[value='ZM']::before,
+    | .option-picker__value[value='ZM']::before {
+    |   content: '🇿🇲';
+    | }
+    | .option-picker__option[value='ZW']::before,
+    | .option-picker__value[value='ZW']::before {
+    |   content: '🇿🇼';
+    | }
+
+block content
+  p(role='alert') Do you like this project? Please support my #[a(href='https://github.com/mecha-cms') Mecha CMS] project too. Thank you!
+  header
+    hgroup
+      h1= title
+      p Accessible custom #[code &lt;select&gt;] (and #[code &lt;input list&gt;]) element.
+    p Press #[kbd Enter] or #[kbd Space] key to open/close the options list. Use #[kbd ArrowDown] and #[kbd ArrowUp] keys to open the options list and then focus on an option, then press #[kbd Enter], #[kbd Space], or #[kbd Tab] to select it. On the “strict” option picker presentation (the example below), you should be able to type away when you focus on it to select the first active option that contains text that matches the search query you are currently typing. On the “loose” option picker presentation (#[a(href='test/input.html' target='_blank') this example]), when you start to input a value, the available options get filtered instead of selected immediately.
+  main
+    form(method='get' target='_blank')
+      p(role='group')
+        select(name='country')
+          optgroup(label='A')
+            option(value='AF') Afghanistan
+            option(value='AX') Åland Islands
+            option(value='AL') Albania
+            option(value='DZ') Algeria
+            option(value='AS') American Samoa
+            option(value='AD') Andorra
+            option(value='AO') Angola
+            option(value='AI') Anguilla
+            option(value='AQ') Antarctica
+            option(value='AG') Antigua and Barbuda
+            option(value='AR') Argentina
+            option(value='AM') Armenia
+            option(value='AW') Aruba
+            option(value='AU') Australia
+            option(value='AT') Austria
+            option(value='AZ') Azerbaijan
+          optgroup(label='B')
+            option(value='BS') Bahamas
+            option(value='BH') Bahrain
+            option(value='BD') Bangladesh
+            option(value='BB') Barbados
+            option(value='BY') Belarus
+            option(value='BE') Belgium
+            option(value='BZ') Belize
+            option(value='BJ') Benin
+            option(value='BM') Bermuda
+            option(value='BT') Bhutan
+            option(value='BO') Bolivia, Plurinational State of bolivia
+            option(value='BA') Bosnia and Herzegovina
+            option(value='BW') Botswana
+            option(value='BV') Bouvet Island
+            option(value='BR') Brazil
+            option(value='IO') British Indian Ocean Territory
+            option(value='BN') Brunei Darussalam
+            option(value='BG') Bulgaria
+            option(value='BF') Burkina Faso
+            option(disabled) Burma
+            option(value='BI') Burundi
+          optgroup(label='C')
+            option(value='KH') Cambodia
+            option(value='CM') Cameroon
+            option(value='CA') Canada
+            option(value='CV') Cape Verde
+            option(value='KY') Cayman Islands
+            option(value='CF') Central African Republic
+            option(value='TD') Chad
+            option(value='CL') Chile
+            option(value='CN') China
+            option(value='CX') Christmas Island
+            option(value='CC') Cocos (Keeling) Islands
+            option(value='CO') Colombia
+            option(value='KM') Comoros
+            option(value='CG') Congo
+            option(value='CD') Congo, The Democratic Republic of the Congo
+            option(value='CK') Cook Islands
+            option(value='CR') Costa Rica
+            option(value='CI') Cote d'Ivoire
+            option(value='HR') Croatia
+            option(value='CU') Cuba
+            option(value='CY') Cyprus
+            option(value='CZ') Czech Republic
+          optgroup(label='D')
+            option(value='DK') Denmark
+            option(value='DJ') Djibouti
+            option(value='DM') Dominica
+            option(value='DO') Dominican Republic
+          optgroup(label='E')
+            option(value='EC') Ecuador
+            option(value='EG') Egypt
+            option(value='SV') El Salvador
+            option(value='GQ') Equatorial Guinea
+            option(value='ER') Eritrea
+            option(value='EE') Estonia
+            option(value='ET') Ethiopia
+          optgroup(label='F')
+            option(value='FK') Falkland Islands (Malvinas)
+            option(value='FO') Faroe Islands
+            option(value='FJ') Fiji
+            option(value='FI') Finland
+            option(value='FR') France
+            option(value='GF') French Guiana
+            option(value='PF') French Polynesia
+            option(value='TF') French Southern Territories
+          optgroup(label='G')
+            option(value='GA') Gabon
+            option(value='GM') Gambia
+            option(value='GE') Georgia
+            option(value='DE') Germany
+            option(value='GH') Ghana
+            option(value='GI') Gibraltar
+            option(value='GR') Greece
+            option(value='GL') Greenland
+            option(value='GD') Grenada
+            option(value='GP') Guadeloupe
+            option(value='GU') Guam
+            option(value='GT') Guatemala
+            option(value='GG') Guernsey
+            option(value='GN') Guinea
+            option(value='GW') Guinea-Bissau
+            option(value='GY') Guyana
+          optgroup(label='H')
+            option(value='HT') Haiti
+            option(value='HM') Heard Island and Mcdonald Islands
+            option(value='VA') Holy See (Vatican City State)
+            option(value='HN') Honduras
+            option(value='HK') Hong Kong
+            option(value='HU') Hungary
+          optgroup(label='I')
+            option(value='IS') Iceland
+            option(value='IN') India
+            option(value='ID') Indonesia
+            option(value='IR') Iran, Islamic Republic of Persian Gulf
+            option(value='IQ') Iraq
+            option(value='IE') Ireland
+            option(value='IM') Isle of Man
+            option(value='IL') Israel
+            option(value='IT') Italy
+          optgroup(label='J')
+            option(value='JM') Jamaica
+            option(value='JP') Japan
+            option(value='JE') Jersey
+            option(value='JO') Jordan
+          optgroup(label='K')
+            option(value='KZ') Kazakhstan
+            option(value='KE') Kenya
+            option(value='KI') Kiribati
+            option(value='KP') Korea, Democratic People's Republic of Korea
+            option(value='KR') Korea, Republic of South Korea
+            option(value='XK') Kosovo
+            option(value='KW') Kuwait
+            option(value='KG') Kyrgyzstan
+          optgroup(label='L')
+            option(value='LA') Laos
+            option(value='LV') Latvia
+            option(value='LB') Lebanon
+            option(value='LS') Lesotho
+            option(value='LR') Liberia
+            option(value='LY') Libyan Arab Jamahiriya
+            option(value='LI') Liechtenstein
+            option(value='LT') Lithuania
+            option(value='LU') Luxembourg
+          optgroup(label='M')
+            option(value='MO') Macao
+            option(value='MK') Macedonia
+            option(value='MG') Madagascar
+            option(value='MW') Malawi
+            option(value='MY') Malaysia
+            option(value='MV') Maldives
+            option(value='ML') Mali
+            option(value='MT') Malta
+            option(value='MH') Marshall Islands
+            option(value='MQ') Martinique
+            option(value='MR') Mauritania
+            option(value='MU') Mauritius
+            option(value='YT') Mayotte
+            option(value='MX') Mexico
+            option(value='FM') Micronesia, Federated States of Micronesia
+            option(value='MD') Moldova
+            option(value='MC') Monaco
+            option(value='MN') Mongolia
+            option(value='ME') Montenegro
+            option(value='MS') Montserrat
+            option(value='MA') Morocco
+            option(value='MZ') Mozambique
+            option(value='MM') Myanmar
+          optgroup(label='N')
+            option(value='NA') Namibia
+            option(value='NR') Nauru
+            option(value='NP') Nepal
+            option(value='NL') Netherlands
+            option(value='AN') Netherlands Antilles
+            option(value='NC') New Caledonia
+            option(value='NZ') New Zealand
+            option(value='NI') Nicaragua
+            option(value='NE') Niger
+            option(value='NG') Nigeria
+            option(value='NU') Niue
+            option(value='NF') Norfolk Island
+            option(value='MP') Northern Mariana Islands
+            option(value='NO') Norway
+          optgroup(label='O')
+            option(value='OM') Oman
+          optgroup(label='P')
+            option(value='PK') Pakistan
+            option(value='PW') Palau
+            option(value='PS') Palestinian Territory, Occupied
+            option(value='PA') Panama
+            option(value='PG') Papua New Guinea
+            option(value='PY') Paraguay
+            option(value='PE') Peru
+            option(value='PH') Philippines
+            option(value='PN') Pitcairn
+            option(value='PL') Poland
+            option(value='PT') Portugal
+            option(value='PR') Puerto Rico
+          optgroup(label='Q')
+            option(value='QA') Qatar
+          optgroup(label='R')
+            option(value='RO') Romania
+            option(value='RU') Russia
+            option(value='RW') Rwanda
+            option(value='RE') Reunion
+          optgroup(label='S')
+            option(value='BL') Saint Barthelemy
+            option(value='SH') Saint Helena, Ascension and Tristan Da Cunha
+            option(value='KN') Saint Kitts and Nevis
+            option(value='LC') Saint Lucia
+            option(value='MF') Saint Martin
+            option(value='PM') Saint Pierre and Miquelon
+            option(value='VC') Saint Vincent and the Grenadines
+            option(value='WS') Samoa
+            option(value='SM') San Marino
+            option(value='ST') Sao Tome and Principe
+            option(value='SA') Saudi Arabia
+            option(value='SN') Senegal
+            option(value='RS') Serbia
+            option(value='SC') Seychelles
+            option(value='SL') Sierra Leone
+            option(value='SG') Singapore
+            option(value='SK') Slovakia
+            option(value='SI') Slovenia
+            option(value='SB') Solomon Islands
+            option(value='SO') Somalia
+            option(value='ZA') South Africa
+            option(value='SS') South Sudan
+            option(value='GS') South Georgia and the South Sandwich Islands
+            option(value='ES') Spain
+            option(value='LK') Sri Lanka
+            option(value='SD') Sudan
+            option(value='SR') Suriname
+            option(value='SJ') Svalbard and Jan Mayen
+            option(value='SZ') Swaziland
+            option(value='SE') Sweden
+            option(value='CH') Switzerland
+            option(value='SY') Syrian Arab Republic
+          optgroup(label='T')
+            option(value='TW') Taiwan
+            option(value='TJ') Tajikistan
+            option(value='TZ') Tanzania, United Republic of Tanzania
+            option(value='TH') Thailand
+            option(value='TL') Timor-Leste
+            option(value='TG') Togo
+            option(value='TK') Tokelau
+            option(value='TO') Tonga
+            option(value='TT') Trinidad and Tobago
+            option(value='TN') Tunisia
+            option(value='TR') Turkey
+            option(value='TM') Turkmenistan
+            option(value='TC') Turks and Caicos Islands
+            option(value='TV') Tuvalu
+          optgroup(label='U')
+            option(value='UG') Uganda
+            option(value='UA') Ukraine
+            option(value='AE') United Arab Emirates
+            option(value='GB') United Kingdom
+            option(value='US') United States
+            option(value='UY') Uruguay
+            option(value='UZ') Uzbekistan
+          optgroup(label='V')
+            option(value='VU') Vanuatu
+            option(value='VE') Venezuela, Bolivarian Republic of Venezuela
+            option(value='VN') Vietnam
+            option(value='VG') Virgin Islands, British
+            option(value='VI') Virgin Islands, U.S.
+          optgroup(label='W')
+            option(value='WF') Wallis and Futuna
+          optgroup(label='X')
+          optgroup(label='Y')
+            option(value='YE') Yemen
+            option(disabled) Yugoslavia
+          optgroup(label='Z')
+            option(value='ZM') Zambia
+            option(value='ZW') Zimbabwe
+        = ' '
+        button(type='submit') Submit
+        = ' '
+        button(type='reset') Reset
+    h2#usage
+      a(aria-hidden='true' href='#usage') #
+      = ' Usage'
+    div(role='note')
+      p #[strong Note:] CSS variables have been removed since version 2.0.0. From now on, I will only provide a minimal style just to make viable interaction. Expect it to look ugly by default. The main goal of this application is to be able to integrate it seamlessly into your web design. By providing a minimal style, it is easy to add other styles to it to adapt it to your own web design. Have a look at the source code on this page to see how I adapted the style to resemble the default style of the previous version.
+    h3#browser
+      a(aria-hidden='true' href='#browser') #
+      = ' Browser'
+    pre: code
+      | &lt;!DOCTYPE html&gt;
+      | &lt;html dir="ltr"&gt;
+      |   &lt;head&gt;
+      |     &lt;meta charset="utf-8"&gt;
+      |     &lt;link href="#[a(href='index.min.css' target='_blank') ./index.min.css]" rel="stylesheet"&gt;
+      |     &lt;style&gt;
+      |       .option-picker {
+      |         width: 100%;
+      |       }
+      |       .option-picker__options {
+      |         background: #fff;
+      |       }
+      |     &lt;/style&gt;
+      |   &lt;/head&gt;
+      |   &lt;body&gt;
+      |     &lt;p&gt;
+      |       &lt;select&gt;
+      |         &lt;option&gt;
+      |           Option 1
+      |         &lt;/option&gt;
+      |         &lt;option&gt;
+      |           Option 2
+      |         &lt;/option&gt;
+      |         &lt;option value="3"&gt;
+      |           Option 3
+      |         &lt;/option&gt;
+      |       &lt;/select&gt;
+      |     &lt;/p&gt;
+      |     &lt;script src="#[a(href='index.min.js' target='_blank') ./index.min.js]"&gt;&lt;/script&gt;
+      |     &lt;script&gt;
+      |       const picker = new OptionPicker(document.querySelector('select'));
+      |     &lt;/script&gt;
+      |   &lt;/body&gt;
+      | &lt;/html&gt;
+    h3#node-js
+      a(aria-hidden='true' href='#node-js') #
+      = ' Node.js'
+    p Functions and methods in this application are mostly native JavaScript and are intended for use by the browser. Node.js doesn’t know about the DOM, so this kind of practice will probably be used more often to build new browser packages than to be used directly in the Node.js server.
+    h4#cjs
+      a(aria-hidden='true' href='#cjs') #
+      = ' CommonJS'
+    pre: code
+      | const OptionPicker = require('@taufik-nurrohman/option-picker').default;
+      |
+      | const picker = new OptionPicker(document.querySelector('select'));
+    h4#mjs
+      a(aria-hidden='true' href='#mjs') #
+      = ' ECMAScript'
+    pre: code
+      | import OptionPicker from '@taufik-nurrohman/option-picker';
+      |
+      | const picker = new OptionPicker(document.querySelector('select'));
+    h2#tests
+      a(aria-hidden='true' href='#tests') #
+      = ' Tests'
+    ul
+      li: a(href='test.html' target='_blank') No Idea?
+      li: a(href='test/attach,detach.html' target='_blank') Attach, Detach
+      li: a(href='test/disabled.html' target='_blank') Disabled State
+      li: a(href='test/focus.html' target='_blank') Focus Automatically
+      li: a(href='test/group.html' target='_blank') Grouped Options
+      li: a(href='test/self.html' target='_blank') Multiple Instances
+      li: a(href='test/multiple.html' target='_blank') Multiple Selection
+      li: a(href='test/max.html' target='_blank') Multiple Selection (Maximum)
+      li: a(href='test/min.html' target='_blank') Multiple Selection (Minimum)
+      li: a(href='test/input.html' target='_blank') Options from #[code &lt;datalist&gt;]
+      li: a(href='test/strict.html' target='_blank') Options from #[code &lt;datalist&gt;] (Strict)
+      li: a(href='test/input/value.html' target='_blank') Options from #[code &lt;datalist&gt;] with #[code &lt;option value="&hellip;"&gt;]
+      li: a(href='test/options.html' target='_blank') Options from JavaScript
+      li: a(href='test/options/lazy.html' target='_blank') Options from JavaScript (Lazy)
+      li: a(href='test/read-only.html' target='_blank') Read-Only State
+      li: a(href='test/required.html' target='_blank') Required State
+      li: a(href='test/selected.html' target='_blank') Selected State
+      li: a(href='test/size.html' target='_blank') Visible Options
+    h2#tweaks
+      a(aria-hidden='true' href='#tweaks') #
+      = ' Tweaks'
+    ul
+      li: a(href='tweak/animation-fade.html' target='_blank') Fade Animation
+      li: a(href='tweak/bar.html' target='_blank') Header in Options
+      li: a(href='tweak/animation-slide.html' target='_blank') Slide Animation
+    h2#constructors
+      a(aria-hidden='true' href='#constructor') #
+      = ' Constructors'
+    h3#constructor-option-picker
+      a(aria-hidden='true' href='#constructor-option-picker') #
+      = ' '
+      code OptionPicker(self, state)
+    pre: code
+      | const picker = new OptionPicker(self, strict = false);
+    pre: code
+      | const picker = new OptionPicker(self, state = {
+      |     max: null,
+      |     min: null,
+      |     options: null,
+      |     size: null,
+      |     strict: false,
+      |     with: []
+      | });
+    h3#constructor-option-picker-options
+      a(aria-hidden='true' href='#constructor-option-picker-options') #
+      = ' '
+      code OptionPicker.Options(picker, options)
+    p This constructor is used internally. It is the return value of the #[a(href='#instance-property-options') #[code picker.options]] property. It contains methods like #[a(href='#instance-property-options-method-get') #[code get()]], #[a(href='#instance-property-options-method-has') #[code has()]], #[a(href='#instance-property-options-method-let') #[code let()]], and #[a(href='#instance-property-options-method-set') #[code set()]] to modify the current options.
+    pre: code
+      | const options = new OptionPicker.Options(picker, ['Option 1', 'Option 2', 'Option 3']);
+    h2#parameters
+      a(aria-hidden='true' href='#parameters') #
+      = ' Parameters'
+    h3#parameter-self
+      a(aria-hidden='true' href='#parameter-self') #
+      = ' '
+      code self
+    p The #[code &lt;input&gt;] or #[code &lt;select&gt;] element.
+    h3#parameter-strict
+      a(aria-hidden='true' href='#parameter-strict') #
+      = ' '
+      code strict
+    p Do not allow users to enter a value other than those available in the options list on the “loose” option picker presentation. Pressing the #[kbd Tab] key will automatically select the first active option.
+    h3#parameter-state
+      a(aria-hidden='true' href='#parameter-state') #
+      = ' '
+      code state
+    p The configuration data.
+    h4#parameter-state-max
+      a(aria-hidden='true' href='#parameter-state-max') #
+      = ' '
+      code state.max
+    p Determines the maximum number of options that can be selected on the option picker that are sourced from a #[code &lt;select multiple&gt;] element. It has a default value set to #[code Infinity]. If the source element is an #[code &lt;input&gt;] element, then its default value will be #[code 1]. This means that the multiple selection feature will apply only to #[code &lt;select&gt;] element.
+    pre: code
+      | const picker = new OptionPicker(document.querySelector('select'), {
+      |     max: 25
+      | });
+    h4#parameter-state-min
+      a(aria-hidden='true' href='#parameter-state-min') #
+      = ' '
+      code state.min
+    p Determines the minimum number of options that can be selected on the option picker. If the source element is a #[code &lt;select&gt;] element, the default value will be #[code 1]; if the source element is an #[code &lt;input&gt;] element, the default value will be #[code 0].
+    pre: code
+      | const picker = new OptionPicker(document.querySelector('select'), {
+      |     min: 5
+      | });
+    h4#parameter-state-options
+      a(aria-hidden='true' href='#parameter-state-options') #
+      = ' '
+      code state.options
+    p A list of options data as an array, an object, a map, or a function that returns an array, an object, or a map.
+    p #[strong Array] is the easiest data structure to write, it guarantees that the order will remain the same when transformed into a series of options. With this kind of data structure, where each element is a scalar, the option label will also act as a value after it is transformed into an options list. This is equivalent to creating an #[code &lt;option&gt;] element without a #[code value] attribute.
+    pre: code
+      | const options = [
+      |     'Option 1',
+      |     'Option 2',
+      |     'Option 3'
+      | ];
+      |
+      | const picker = new OptionPicker(document.querySelector('select'), {options});
+    pre: code
+      | const options = [
+      |     ['Option 1', {
+      |         value: 1
+      |     }],
+      |     ['Option 2', {
+      |         value: 2
+      |     }],
+      |     ['Option 3', {
+      |         active: false,
+      |         value: 3
+      |     }]
+      | ];
+      |
+      | const picker = new OptionPicker(document.querySelector('select'), {options});
+    p #[strong Object] is another data structure that is also easy to write. The object item keys act as option values, and the object item values act as option labels. The only problem with this data structure is that it cannot guarantee that the order will remain the same when transformed into a series of options, especially if each object key is written as a number.
+    pre: code
+      | const options = {
+      |     '1': 'Option 1',
+      |     '2': 'Option 2',
+      |     '3': 'Option 3'
+      | };
+      |
+      | const picker = new OptionPicker(document.querySelector('select'), {options});
+    p The solution would be to set the object item key as text and then set the object item value in the attributes object.
+    pre: code
+      | const options = {
+      |     'option-1': ['Option 1', {
+      |         value: 1
+      |     }],
+      |     'option-2': ['Option 2', {
+      |         value: 2
+      |     }],
+      |     'option-3': ['Option 3', {
+      |         active: false,
+      |         value: 3
+      |     }]
+      | };
+      |
+      | const picker = new OptionPicker(document.querySelector('select'), {options});
+    p #[strong Map] is another type of data structure, similar to an object, but it guarantees that the order will remain the same when transformed into a series of options.
+    pre: code
+      | const options = new Map;
+      |
+      | options.set(1, 'Option 1');
+      | options.set(2, 'Option 2');
+      | options.set(3, 'Option 3');
+      |
+      | const picker = new OptionPicker(document.querySelector('select'), {options});
+    pre: code
+      | const options = new Map;
+      |
+      | options.set(1, ['Option 1', {
+      |     value: 1
+      | }]);
+      |
+      | options.set(2, ['Option 2', {
+      |     value: 2
+      | }]);
+      |
+      | options.set(3, ['Option 3', {
+      |     active: false,
+      |     value: 3
+      | }]);
+      |
+      | const picker = new OptionPicker(document.querySelector('select'), {options});
+    p #[strong Function] that returns one of the three data structures above can also be used. The first argument of this function holds the typed search query. Useful for creating dynamic options list capabilities using #[a(href='https://en.wikipedia.org/wiki/Ajax_(programming)' rel='nofollow' target='_blank') AJAX].
+    pre: code
+      | const options = function (query) {
+      |     return [
+      |         'Option 1',
+      |         'Option 2',
+      |         'Option 3'
+      |     ];
+      | };
+      |
+      | const picker = new OptionPicker(document.querySelector('select'), {options});
+    pre: code
+      | const options = function (query) {
+      |     return fetch('./options.php?query=' + encodeURIComponent(query)).then(response =&gt; response.json());
+      | };
+      |
+      | const picker = new OptionPicker(document.querySelector('select'), {options});
+    h4#parameter-state-size
+      a(aria-hidden='true' href='#parameter-state-size') #
+      = ' '
+      code state.size
+    p Set the value to an integer greater than #[code 1] to display the options list as a scrollable area that is always visible. This layout takes up space and is provided to mimic the behavior of a #[code &lt;select&gt;] element when given the #[code size] attribute. It has a default value of #[code null]. If #[code self] is a #[code &lt;select&gt;] element, then the application will try to use the #[code size] attribute value of that element. This does not apply if #[a(href='#parameter-self') #[code self]] is an #[code &lt;input&gt;] element, because #[code size] attribute on an #[code &lt;input&gt;] element has different semantics. #[sup #[a(href='https://html.spec.whatwg.org#attr-input-size' rel='nofollow' target='_blank') 1]] #[sup #[a(href='https://html.spec.whatwg.org#attr-select-size' rel='nofollow' target='_blank') 2]]
+    pre: code
+      | const picker = new OptionPicker(document.querySelector('select:not([size])'), {
+      |     size: 5
+      | });
+    h4#parameter-state-strict
+      a(aria-hidden='true' href='#parameter-state-strict') #
+      = ' '
+      code state.strict
+    p Do not allow users to enter a value other than those available in the options list on the “loose” option picker presentation. Pressing the #[kbd Tab] key will automatically select the first active option.
+    pre: code
+      | const picker = new OptionPicker(document.querySelector('input[list]'), {
+      |     strict: true
+      | });
+    h4#parameter-state-with
+      a(aria-hidden='true' href='#parameter-state-with') #
+      = ' '
+      code state.with
+    p List of #[a(href='#anatomy-of-an-extension') callable functions or objects containing an #[code attach()] method] to be invoked each time the application is initialized. A very simple “plugin” system.
+    h2#methods
+      a(aria-hidden='true' href='#methods') #
+      = ' Methods'
+    h3#instance-methods
+      a(aria-hidden='true' href='#instance-methods') #
+      = ' Instance Methods'
+    p Instance methods are methods available through the results of an #[a(href='#constructor-option-picker') #[code OptionPicker]] construct.
+    h4#instance-method-attach
+      a(aria-hidden='true' href='#instance-method-attach') #
+      = ' '
+      code picker.attach(self, state)
+    p Re-initializes the application and its #[a(href='#extensions') extensions] after it has been detached.
+    pre: code
+      | picker.attach();
+    h4#instance-method-blur
+      a(aria-hidden='true' href='#instance-method-blur') #
+      = ' '
+      code picker.blur()
+    p Blurs from the option picker’s input or value.
+    pre: code
+      | picker.blur();
+    h4#instance-method-detach
+      a(aria-hidden='true' href='#instance-method-detach') #
+      = ' '
+      code picker.detach()
+    p Removes the application view and executes the #[code detach()] method of the #[a(href='#extensions') extensions], if they are present.
+    pre: code
+      | picker.detach();
+    h4#instance-method-enter
+      a(aria-hidden='true' href='#instance-method-enter') #
+      = ' '
+      code picker.enter(focus, mode = true)
+    p Shows the option picker’s options.
+    pre: code
+      | picker.enter(); // Show the option picker’s options
+      | picker.enter(true); // Show the option picker’s options and focus to the option picker’s input or value
+    h4#instance-method-exit
+      a(aria-hidden='true' href='#instance-method-exit') #
+      = ' '
+      code picker.exit(focus, mode = true)
+    p Hides the option picker’s options.
+    pre: code
+      | picker.exit(); // Hide the option picker’s options
+      | picker.exit(true); // Hide the option picker’s options and focus to the option picker’s input or value
+    h4#instance-method-fire
+      a(aria-hidden='true' href='#instance-method-fire') #
+      = ' '
+      code picker.fire(event, data, that)
+    p Fires an event.
+    pre: code
+      | picker.fire('change', []);
+    h4#instance-method-focus
+      a(aria-hidden='true' href='#instance-method-focus') #
+      = ' '
+      code picker.focus(mode = true)
+    p Focuses to the option picker’s input or value.
+    pre: code
+      | picker.focus(); // Focus and select the text
+      | picker.focus(-1); // Focus and put the caret to the start of the text
+      | picker.focus(+1); // Focus and put the caret to the end of the text
+    h4#instance-method-off
+      a(aria-hidden='true' href='#instance-method-off') #
+      = ' '
+      code picker.off(event, task)
+    p Removes an event.
+    pre: code
+      | picker.off('change'); // Remove all events from the `change` event container
+      | picker.off('change', onChange); // Remove `onChange` event from the `change` event container
+    h4#instance-method-on
+      a(aria-hidden='true' href='#instance-method-on') #
+      = ' '
+      code picker.on(event, task)
+    p Adds a new event.
+    pre: code
+      | picker.on('change', function () {
+      |     console.log(this.value);
+      | });
+    pre: code
+      | function onChange() {
+      |     console.log(this.value);
+      | }
+      |
+      | picker.on('change', onChange);
+    h4#instance-method-reset
+      a(aria-hidden='true' href='#instance-method-reset') #
+      = ' '
+      code picker.reset(focus, mode = true)
+    p Resets the option picker’s value or values to its initial value or values.
+    pre: code
+      | picker.reset(); // Reset the option picker’s value or values
+      | picker.reset(true); // Reset the option picker’s value or values and focus to the option picker’s input or value
+    h3#static-methods
+      a(aria-hidden='true' href='#static-methods') #
+      = ' Static Methods'
+    p Static methods are methods available directly on the #[a(href='#constructor-option-picker') #[code OptionPicker]] object.
+    h4#static-method-from
+      a(aria-hidden='true' href='#static-method-from') #
+      = ' '
+      code OptionPicker.from(self, state)
+    p Creates a new #[a(href='#constructor-option-picker') #[code OptionPicker]] instance.
+    pre: code
+      | const picker = OptionPicker.from(document.querySelector('select'));
+    h4#static-method-of
+      a(aria-hidden='true' href='#static-method-of') #
+      = ' '
+      code OptionPicker.of(self)
+    p Gets #[a(href='#constructor-option-picker') #[code OptionPicker]] instance of an element.
+    pre: code
+      | document.querySelectorAll('input[list], select').forEach(self =&gt; {
+      |     const picker = OptionPicker.of(self);
+      | });
+    h2#properties
+     a(aria-hidden='true' href='#properties') #
+     = ' Properties'
+    h3#instance-properties
+      a(aria-hidden='true' href='#instance-properties') #
+      = ' Instance Properties'
+    p Instance properties are properties available through the results of an #[a(href='#constructor-option-picker') #[code OptionPicker]] construct.
+    h4#instance-property-active
+      a(aria-hidden='true' href='#instance-property-active') #
+      = ' '
+      code picker.active
+    p Gets or sets the active state of the option picker. By setting the value to #[code false] or #[code true], the disabled state of the source element will also be set automatically.
+    pre: code
+      | picker.active = false; // // Make the option picker “disabled”
+      | picker.active = true; // // Make the option picker “enabled”
+    h4#instance-property-fix
+      a(aria-hidden='true' href='#instance-property-fix') #
+      = ' '
+      code picker.fix
+    p Gets or sets the read-only state of the option picker. By setting the value to #[code false] or #[code true], the read-only state of the source element will also be set automatically. This only applies to the option picker that is sourced from an #[code &lt;input&gt;] element.
+    pre: code
+      | picker.fix = true; // Make the option picker “read-only”
+    h4#instance-property-hooks
+      a(aria-hidden='true' href='#instance-property-hooks') #
+      = ' '
+      code picker.hooks
+    p Returns the events data.
+    pre: code
+      | console.log(picker.hooks);
+    h4#instance-property-mask
+      a(aria-hidden='true' href='#instance-property-mask') #
+      = ' '
+      code picker.mask
+    p Returns the option picker’s mask.
+    pre: code
+      | picker.mask.classList.add(picker.state.n + '--dark');
+    h4#instance-property-max
+      a(aria-hidden='true' href='#instance-property-max') #
+      = ' '
+      code picker.max
+    p Proxy that passes to the #[a(href='#parameter-state-max') #[code picker.state.max]] property, with additional actions that are executed while the value is being set.
+    p(role='note') #[b Note:] This does not apply to an option picker that is sourced from an #[code &lt;input&gt;] element.
+    pre: code
+      | console.log(picker.max); // Returns the `picker.state.max` value
+    pre: code
+      | picker.max = 4; // Add `multiple` attribute to the `&lt;select&gt;` element and allow the user to select up to 4 options. If the option picker is sourced from a `&lt;select multiple&gt;` element and it has more than 4 options selected, the form submission will be disabled and the `max.options` hook will be fired.
+    h4#instance-property-min
+      a(aria-hidden='true' href='#instance-property-min') #
+      = ' '
+      code picker.min
+    p Proxy that passes to the #[a(href='#parameter-state-min') #[code picker.state.min]] property, with additional actions that are executed while the value is being set.
+    p(role='note') #[b Note:] If the value is set to #[code 0] and the option picker is sourced from a #[code &lt;select&gt;] element, it will allow the user to remove the only selection by focusing on the option picker value and then pressing the #[kbd Backspace] or #[kbd Delete] key, or by focusing on the selected option and then clicking/tapping or pressing the #[kbd Space] key on it to remove the selection.
+    pre: code
+      | console.log(picker.min); // Returns the `picker.state.min` value
+    pre: code
+      | picker.min = 4; // If the option picker is sourced from a `&lt;select multiple&gt;` element and it has less than 4 options selected, the form submission will be disabled and the `min.options` hook will be fired.
+    h4#instance-property-options
+      a(aria-hidden='true' href='#instance-property-options') #
+      = ' '
+      code picker.options
+    p Gets the current options list data, or sets (overwrites) the current options list with a new data.
+    pre: code
+      | console.log(picker.options);
+    pre: code
+      | picker.options = [
+      |     'Option 1',
+      |     'Option 2',
+      |     'Option 3'
+      | ];
+      |
+      | // Or…
+      | picker.options.set('Option 1');
+      | picker.options.set('Option 2');
+      | picker.options.set('Option 3');
+    pre: code
+      | picker.options = [
+      |     ['Option 1', {
+      |         value: 1
+      |     }],
+      |     ['Option 2', {
+      |         value: 2
+      |     }],
+      |     ['Option 3', {
+      |         active: false,
+      |         value: 3
+      |     }]
+      | ];
+      |
+      | // Or…
+      | picker.options.set(1, 'Option 1');
+      | picker.options.set(2, 'Option 2');
+      | picker.options.set(3, ['Option 3', {
+      |     active: false
+      | }]);
+    pre: code
+      | picker.options = {
+      |     '1': 'Option 1',
+      |     '2': 'Option 2',
+      |     '3': 'Option 3'
+      | };
+      |
+      | // Or…
+      | picker.options.set(1, 'Option 1');
+      | picker.options.set(2, 'Option 2');
+      | picker.options.set(3, 'Option 3');
+    pre: code
+      | picker.options = {
+      |     'option-1': ['Option 1', {
+      |         value: 1
+      |     }],
+      |     'option-2': ['Option 2', {
+      |         value: 2
+      |     }],
+      |     'option-3': ['Option 3', {
+      |         active: false,
+      |         value: 3
+      |     }]
+      | };
+      |
+      | // Or…
+      | picker.options.set('option-1', ['Option 1', {
+      |     value: 1
+      | }]);
+      |
+      | picker.options.set('option-2', ['Option 2', {
+      |     value: 2
+      | }]);
+      |
+      | picker.options.set('option-3', ['Option 3', {
+      |     active: false,
+      |     value: 3
+      | }]);
+    pre: code
+      | const options = new Map;
+      |
+      | options.set(1, 'Option 1');
+      | options.set(2, 'Option 2');
+      | options.set(3, 'Option 3');
+      |
+      | picker.options = options;
+    pre: code
+      | const options = new Map;
+      |
+      | options.set(1, ['Option 1', {
+      |     value: 1
+      | }]);
+      |
+      | options.set(2, ['Option 2', {
+      |     value: 2
+      | }]);
+      |
+      | options.set(3, ['Option 3', {
+      |     active: false,
+      |     value: 3
+      | }]);
+      |
+      | picker.options = options;
+    h5#instance-property-options-method-at
+      a(aria-hidden='true' href='#instance-property-options-method-at') #
+      = ' '
+      code picker.options.at(key)
+    p Returns the raw option data from its key.
+    pre: code
+      | console.log(picker.options.at('option-1'));
+    h5#instance-property-options-method-count
+      a(aria-hidden='true' href='#instance-property-options-method-count') #
+      = ' '
+      code picker.options.count()
+    p Returns the total number of options.
+    pre: code
+      | console.log(picker.options.count());
+    h5#instance-property-options-method-get
+      a(aria-hidden='true' href='#instance-property-options-method-get') #
+      = ' '
+      code picker.options.get(key)
+    p Returns the option position in the list, starting from #[code 0]. If it is in a group, it will return an array containing the option position in the group and the group position in the list.
+    pre: code
+      | let index = picker.options.get('option-1');
+      | if (-1 !== ('number' === typeof index ? index : index[0])) { … }
+    h5#instance-property-options-method-has
+      a(aria-hidden='true' href='#instance-property-options-method-has') #
+      = ' '
+      code picker.options.has(key)
+    p Returns #[code true] if the option is present.
+    pre: code
+      | if (picker.options.has('option-1')) { … }
+    h5#instance-property-options-method-let
+      a(aria-hidden='true' href='#instance-property-options-method-let') #
+      = ' '
+      code picker.options.let(key)
+    p Removes an option by its key.
+    pre: code
+      | picker.options.let('option-1'); // Remove “option-1” option
+      | picker.options.let(); // Remove all options
+    h5#instance-property-options-property-open
+      a(aria-hidden='true' href='#instance-property-options-property-open') #
+      = ' '
+      code picker.options.open
+    p Returns #[code true] if options is visible.
+    pre: code
+      | if (picker.options.open) { … }
+    h5#instance-property-options-method-set
+      a(aria-hidden='true' href='#instance-property-options-method-set') #
+      = ' '
+      code picker.options.set(key, value)
+    p Adds a new option with the given value or key and value.
+    pre: code
+      | picker.options.set('option-1');
+      | picker.options.set('option-2', 'Option 2');
+      | picker.options.set('option-3', ['Option 3', {
+      |     active: false
+      | }]);
+    h4#instance-property-self
+      a(aria-hidden='true' href='#instance-property-self') #
+      = ' '
+      code picker.self
+    p Returns the #[code &lt;input&gt;] or #[code &lt;select&gt;] element.
+    pre: code
+      | console.log(picker.self.getAttribute('name'));
+    h4#instance-property-size
+      a(aria-hidden='true' href='#instance-property-size') #
+      = ' '
+      code picker.size
+    p Changes the layout of a drop-down select box to a scrollable area select box. This is valid only if the value is an integer greater than #[code 1]. Otherwise, it will be considered as an invalid value and will revert the layout to its default layout, which is a drop-down select box.
+    pre: code
+      | picker.size = 5;
+    h4#instance-property-state
+      a(aria-hidden='true' href='#instance-property-state') #
+      = ' '
+      code picker.state
+    p Returns the application states if any.
+    pre: code
+      | console.log(picker.state);
+    h4#instance-property-text
+      a(aria-hidden='true' href='#instance-property-text') #
+      = ' '
+      code picker.text
+    p Gets or sets the current text in the “loose” option picker’s input.
+    pre: code
+      | console.log(picker.text);
+    pre: code
+      | picker.text = 'Option 3';
+    h4#instance-property-value
+      a(aria-hidden='true' href='#Instance-property-value') #
+      = ' '
+      code picker.value
+    p Proxy that passes to the #[a(href='#instance-property-self') #[code picker.self.value]] property, with additional actions that are executed while the value is being set.
+    pre: code
+      | console.log(picker.value);
+    pre: code
+      | picker.on('change', function () {
+      |     console.log(this.value);
+      | });
+      |
+      | picker.value = '3';
+    h4#instance-property-vital
+      a(aria-hidden='true' href='#instance-property-vital') #
+      = ' '
+      code picker.vital
+    p Gets or sets the required state of the option picker. By setting the value to #[code false] or #[code true], the required state of the source element will also be set automatically. If the value is set to #[code true] and the current #[a(href='#instance-property-min') #[code picker.min]] value is #[code 0], then it will change the current #[a(href='#instance-property-min') #[code picker.min]] value to #[code 1].
+    pre: code
+      | picker.vital = true; // Make the option picker “required”
+    h3#static-properties
+      a(aria-hidden='true' href='#static-properties') #
+      = ' Static Properties'
+    p Static properties are properties available directly on the #[a(href='#constructor-option-picker') #[code OptionPicker]] object.
+    h4#static-property-prototype
+      a(aria-hidden='true' href='#static-property-prototype') #
+      = ' '
+      code OptionPicker._
+    p Alias for #[code OptionPicker.prototype].
+    pre: code
+      | OptionPicker._.clear = function () {
+      |     if ('input' !== this.self.tagName.toLowerCase()) {
+      |         return this;
+      |     }
+      |     return (this.value = ""), this;
+      | };
+      |
+      | const picker = new OptionPicker(document.querySelector('input'));
+      |
+      | picker.clear(); // Clear value
+    h4#static-property-state
+      a(aria-hidden='true' href='#static-property-state') #
+      = ' '
+      code OptionPicker.state
+    p Returns the default values of #[a(href='#instance-property-state') #[code picker.state]].
+    pre: code
+      | const picker = new OptionPicker(document.querySelector('select'), {
+      |     foo: ['bar', 'baz', 'qux']
+      | });
+      |
+      | console.log([OptionPicker.state, picker.state]);
+    h4#static-property-version
+      a(aria-hidden='true' href='#static-property-version') #
+      = ' '
+      code OptionPicker.version
+    p Returns the application version.
+    h2#extensions
+      a(aria-hidden='true' href='#extensions') #
+      = ' Extensions'
+    h3#anatomy-of-an-extension
+      a(aria-hidden='true' href='#anatomy-of-an-extension') #
+      = ' Anatomy of an Extension'
+    p Extension as a function:
+    pre: code
+      | function Extension(self, state = {}) {
+      |     this.test = 1;
+      |     return this;
+      | }
+      |
+      | Object.defineProperty(Extension, 'name', {
+      |     value: 'Extension'
+      | });
+    p Extension as an object:
+    pre: code
+      | const Extension = {
+      |     attach: function (self, state = {}) {
+      |         this.test = 1;
+      |         return this;
+      |     },
+      |     detach: function (self, state = {}) {
+      |         delete this.test;
+      |         return this;
+      |     },
+      |     name: 'Extension'
+      | };
+    h3#usage-of-an-extension
+      a(aria-hidden='true' href='#usage-of-an-extension') #
+      = ' Usage of an Extension'
+    p As a core extension:
+    pre: code
+      | OptionPicker.state.with.push(Extension);
+    p As an optional extension:
+    pre: code
+      | const picker = new OptionPicker(document.querySelector('select'), {
+      |     with: [Extension]
+      | });
+    h3#list-of-extensions
+      a(aria-hidden='true' href='#list-of-extensions') #
+      = ' List of Extensions'
+    ul
+      li: a(aria-disabled='true') Custom Scroll Bar
+      li: a(aria-disabled='true') Highlight Search Term
+    h2#license
+      a(aria-hidden='true' href='#license') #
+      = ' License'
+    p If this project has saved you time, please #[a(href='https://paypal.me/tatautaufik' target='_blank') donate]. Thank you! ❤️
+  footer
+    hr
+    p
+      != '© ' + year + ' '
+      a(href='/') Taufik Nurrohman
