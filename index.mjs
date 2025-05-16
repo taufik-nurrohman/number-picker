@@ -81,6 +81,20 @@ function focusTo(node) {
     return node.focus(), node;
 }
 
+function onKeyDownTextInput(e) {
+    let $ = this, exit,
+        key = e.key,
+        picker = getReference($),
+        {_mask, self, state} = picker,
+        {hint} = _mask;
+    delay(() => getText($, 0) ? setStyle(hint, 'color', 'transparent') : letStyle(hint, 'color'), 1)();
+    exit && (offEventDefault(e), offEventPropagation(e));
+}
+
+function onPointerDownMask(e) {
+    focusTo(getReference(this)), offEventDefault(e);
+}
+
 function NumberPicker(self, state) {
     const $ = this;
     if (!self) {
@@ -174,8 +188,11 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
             isReadOnlySelf = isReadOnly(self),
             isRequiredSelf = isRequired(self),
             theInputID = self.id,
+            theInputMax = self.max,
+            theInputMin = self.min,
             theInputName = self.name,
-            theInputPlaceholder = self.placeholder;
+            theInputPlaceholder = self.placeholder || theInputMin,
+            theInputStep = self.step;
         $._active = !isDisabledSelf && !isReadOnlySelf;
         $._fix = isReadOnlySelf;
         $._vital = isRequiredSelf;
@@ -241,7 +258,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         // onEvent(EVENT_BLUR, textInput, onBlurTextInput);
         // onEvent(EVENT_CUT, textInput, onCutTextInput);
         // onEvent(EVENT_FOCUS, textInput, onFocusTextInput);
-        // onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
+        onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
         // onEvent(EVENT_PASTE, textInput, onPasteTextInput);
         setChildLast(text, textInput);
         setChildLast(text, textInputHint);
@@ -257,7 +274,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         // }
         // onEvent(EVENT_FOCUS, self, onFocusSelf);
         // onEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
-        // onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
+        onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
         // onEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
         // onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
         // onEvent(EVENT_RESIZE, W, onResizeWindow, {passive: true});
@@ -265,24 +282,20 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         // onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
         // onEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot, {passive: true});
         // onEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
-        // onEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
+        onEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
         self[TOKEN_TAB_INDEX] = -1;
         setReference(mask, $);
-        let _mask = {
+        $._mask = {
             // arrow: arrow,
-            // flex: maskFlex,
-            // hint: isInputSelf ? textInputHint : null,
-            // input: isInputSelf ? textInput : null,
-            // lot: maskOptionsLot,
-            // of: self,
-            // options: maskOptions,
-            // self: mask,
-            // values: new Set
+            flex: maskFlex,
+            hint: textInputHint,
+            input: textInput,
+            of: self,
+            self: mask
         };
         // Re-assign some state value(s) using the setter to either normalize or reject the initial value
         $.max = max = (max ?? Infinity);
         $.min = min = (min ?? -Infinity);
-        $._mask = _mask;
         let {_active} = $;
         // Force the `this._active` value to `true` to set the initial value
         $._active = true;
@@ -334,12 +347,12 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         // offEvent(EVENT_BLUR, input, onBlurTextInput);
         // offEvent(EVENT_CUT, input, onCutTextInput);
         // offEvent(EVENT_FOCUS, input, onFocusTextInput);
-        // offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
+        offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
         // offEvent(EVENT_PASTE, input, onPasteTextInput);
         // offEvent(EVENT_FOCUS, self, onFocusSelf);
 
         // offEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
-        // offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
+        offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
         // offEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
         // offEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
         // offEvent(EVENT_RESIZE, W, onResizeWindow);
@@ -347,7 +360,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         // offEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
         // offEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot);
         // offEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
-        // offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
+        offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
         // Detach extension(s)
         if (isArray(state.with)) {
             forEachArray(state.with, (v, k) => {
@@ -371,6 +384,10 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         return $;
     },
     focus: function (mode) {
+        let $ = this,
+            {_mask} = $,
+            {input} = _mask;
+        return focusTo(input), selectTo(input, mode), $;
     },
     reset: function (focus, mode) {
     }

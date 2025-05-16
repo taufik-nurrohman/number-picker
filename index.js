@@ -247,6 +247,10 @@
         return map.set(k, v);
     };
     var references = new WeakMap();
+
+    function _toArray(iterable) {
+        return Array.from(iterable);
+    }
     var D = document;
     var getAttribute = function getAttribute(node, attribute, parseValue) {
         if (parseValue === void 0) {
@@ -257,6 +261,10 @@
         }
         var value = node.getAttribute(attribute);
         return parseValue ? _toValue(value) : value;
+    };
+    var getChildren = function getChildren(parent, index, anyNode) {
+        var children = _toArray(parent['child' + ('Nodes')]);
+        return isNumber(index) ? children[index] || null : children;
     };
     var getID = function getID(node, batch) {
         if (batch === void 0) {
@@ -285,6 +293,18 @@
             return node[state];
         }
         return getParent(node, state);
+    };
+    var getText = function getText(node, trim) {
+        var state = 'textContent';
+        if (!hasState(node, state)) {
+            return false;
+        }
+        var content = node[state];
+        content = content;
+        return "" !== content ? content : null;
+    };
+    var getType = function getType(node) {
+        return node && node.nodeType || null;
     };
     var getValue = function getValue(node, parseValue) {
         var value = (node.value || "").replace(/\r?\n|\r/g, '\n');
@@ -448,6 +468,76 @@
         }), node;
     };
     var theID = {};
+    var _getSelection = function _getSelection() {
+        return D.getSelection();
+    };
+    var _setRange = function _setRange() {
+        return D.createRange();
+    };
+    // The `node` parameter is currently not in use
+    var letSelection = function letSelection(node, selection) {
+        selection = selection || _getSelection();
+        return selection.empty(), selection;
+    };
+    // <https://stackoverflow.com/a/13950376/1163000>
+    var restoreSelection = function restoreSelection(node, store, selection) {
+        var index = 0,
+            range = _setRange();
+        range.setStart(node, 0);
+        range.collapse(true);
+        var exit,
+            hasStart,
+            nodeCurrent,
+            nodeStack = [node];
+        while (!exit && (nodeCurrent = nodeStack.pop())) {
+            if (3 === getType(nodeCurrent)) {
+                var indexNext = index + toCount(nodeCurrent);
+                if (!hasStart && store[0] >= index && store[0] <= indexNext) {
+                    range.setStart(nodeCurrent, store[0] - index);
+                    hasStart = true;
+                }
+                if (hasStart && store[1] >= index && store[1] <= indexNext) {
+                    exit = true;
+                    range.setEnd(nodeCurrent, store[1] - index);
+                }
+                index = indexNext;
+            } else {
+                forEachArray(getChildren(nodeCurrent, null), function (v) {
+                    return nodeStack.push(v);
+                });
+            }
+        }
+        return setSelection(node, range, letSelection(node, selection));
+    };
+    var selectTo = function selectTo(node, mode, selection) {
+        selection = selection || _getSelection();
+        letSelection(node, selection);
+        var range = _setRange();
+        range.selectNodeContents(node);
+        selection = setSelection(node, range, selection);
+        if (1 === mode) {
+            selection.collapseToEnd();
+        } else if (-1 === mode) {
+            selection.collapseToStart();
+        } else;
+    };
+    // The `node` parameter is currently not in use
+    var setSelection = function setSelection(node, range, selection) {
+        selection = selection || _getSelection();
+        if (isArray(range)) {
+            return restoreSelection(node, range, selection);
+        }
+        return selection.addRange(range), selection;
+    };
+    var delay = function delay(then, time) {
+        return function () {
+            var _arguments2 = arguments,
+                _this2 = this;
+            setTimeout(function () {
+                return then.apply(_this2, _arguments2);
+            }, time);
+        };
+    };
 
     function hook($, $$) {
         $$ = $$ || $;
@@ -500,10 +590,50 @@
         };
         return $.hooks = {}, $;
     }
+    var offEvent = function offEvent(name, node, then) {
+        node.removeEventListener(name, then);
+    };
+    var offEventDefault = function offEventDefault(e) {
+        return e && e.preventDefault();
+    };
+    var onEvent = function onEvent(name, node, then, options) {
+        if (options === void 0) {
+            options = false;
+        }
+        node.addEventListener(name, then, options);
+    };
+    var EVENT_DOWN = 'down';
+    var EVENT_KEY = 'key';
+    var EVENT_KEY_DOWN = EVENT_KEY + EVENT_DOWN;
+    var EVENT_MOUSE = 'mouse';
+    var EVENT_MOUSE_DOWN = EVENT_MOUSE + EVENT_DOWN;
+    var EVENT_TOUCH = 'touch';
+    var EVENT_TOUCH_START = EVENT_TOUCH + 'start';
     var TOKEN_FALSE = 'false';
     var TOKEN_TAB_INDEX = 'tabIndex';
     var TOKEN_TRUE = 'true';
     var name = 'NumberPicker';
+
+    function focusTo(node) {
+        return node.focus(), node;
+    }
+
+    function onKeyDownTextInput(e) {
+        var $ = this;
+        e.key;
+        var picker = getReference($),
+            _mask = picker._mask;
+        picker.self;
+        picker.state;
+        var hint = _mask.hint;
+        delay(function () {
+            return getText($) ? setStyle(hint, 'color', 'transparent') : letStyle(hint, 'color');
+        }, 1)();
+    }
+
+    function onPointerDownMask(e) {
+        focusTo(getReference(this)), offEventDefault(e);
+    }
 
     function NumberPicker(self, state) {
         var $ = this;
@@ -586,9 +716,12 @@
                 isDisabledSelf = isDisabled(self),
                 isReadOnlySelf = isReadOnly(self),
                 isRequiredSelf = isRequired(self),
-                theInputID = self.id,
+                theInputID = self.id;
+            self.max;
+            var theInputMin = self.min,
                 theInputName = self.name,
-                theInputPlaceholder = self.placeholder;
+                theInputPlaceholder = self.placeholder || theInputMin;
+            self.step;
             $._active = !isDisabledSelf && !isReadOnlySelf;
             $._fix = isReadOnlySelf;
             $._vital = isRequiredSelf;
@@ -654,7 +787,7 @@
             // onEvent(EVENT_BLUR, textInput, onBlurTextInput);
             // onEvent(EVENT_CUT, textInput, onCutTextInput);
             // onEvent(EVENT_FOCUS, textInput, onFocusTextInput);
-            // onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
+            onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
             // onEvent(EVENT_PASTE, textInput, onPasteTextInput);
             setChildLast(text, textInput);
             setChildLast(text, textInputHint);
@@ -670,7 +803,7 @@
             // }
             // onEvent(EVENT_FOCUS, self, onFocusSelf);
             // onEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
-            // onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
+            onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
             // onEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
             // onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
             // onEvent(EVENT_RESIZE, W, onResizeWindow, {passive: true});
@@ -678,24 +811,20 @@
             // onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
             // onEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot, {passive: true});
             // onEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
-            // onEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
+            onEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
             self[TOKEN_TAB_INDEX] = -1;
             setReference(mask, $);
-            var _mask = {
+            $._mask = {
                 // arrow: arrow,
-                // flex: maskFlex,
-                // hint: isInputSelf ? textInputHint : null,
-                // input: isInputSelf ? textInput : null,
-                // lot: maskOptionsLot,
-                // of: self,
-                // options: maskOptions,
-                // self: mask,
-                // values: new Set
+                flex: maskFlex,
+                hint: textInputHint,
+                input: textInput,
+                of: self,
+                self: mask
             };
             // Re-assign some state value(s) using the setter to either normalize or reject the initial value
             $.max = max = max != null ? max : Infinity;
             $.min = min = min != null ? min : -Infinity;
-            $._mask = _mask;
             var _active = $._active;
             // Force the `this._active` value to `true` to set the initial value
             $._active = true;
@@ -737,8 +866,8 @@
                 _mask = $._mask,
                 mask = $.mask,
                 self = $.self,
-                state = $.state;
-            _mask.input;
+                state = $.state,
+                input = _mask.input;
             _mask.value;
             getParentForm(self);
             $._active = false;
@@ -750,11 +879,11 @@
             // offEvent(EVENT_BLUR, input, onBlurTextInput);
             // offEvent(EVENT_CUT, input, onCutTextInput);
             // offEvent(EVENT_FOCUS, input, onFocusTextInput);
-            // offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
+            offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
             // offEvent(EVENT_PASTE, input, onPasteTextInput);
             // offEvent(EVENT_FOCUS, self, onFocusSelf);
             // offEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
-            // offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
+            offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
             // offEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
             // offEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
             // offEvent(EVENT_RESIZE, W, onResizeWindow);
@@ -762,7 +891,7 @@
             // offEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
             // offEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot);
             // offEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
-            // offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
+            offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
             // Detach extension(s)
             if (isArray(state.with)) {
                 forEachArray(state.with, function (v, k) {
@@ -785,7 +914,12 @@
             $.mask = null;
             return $;
         },
-        focus: function focus(mode) {},
+        focus: function focus(mode) {
+            var $ = this,
+                _mask = $._mask,
+                input = _mask.input;
+            return focusTo(input), selectTo(input, mode), $;
+        },
         reset: function reset(focus, mode) {}
     });
     return NumberPicker;
