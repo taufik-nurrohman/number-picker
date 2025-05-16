@@ -74,11 +74,32 @@ const TOKEN_TEXT = 'text';
 const TOKEN_TRUE = 'true';
 const TOKEN_VALUE = 'value';
 const TOKEN_VALUES = TOKEN_VALUE + 's';
+const TOKEN_VISIBILITY = 'visibility';
 
 const name = 'NumberPicker';
 
 function focusTo(node) {
     return node.focus(), node;
+}
+
+function onCutTextInput(e) {
+}
+
+function onInputTextInput(e) {
+    let $ = this,
+        {inputType} = e,
+        picker = getReference($),
+        {_active} = picker;
+    if (!_active) {
+        return offEventDefault(e);
+    }
+    let {_mask} = picker,
+        {hint} = _mask;
+    if ('deleteContent' === inputType.slice(0, 13) && !getText($, 0)) {
+        letStyle(hint, TOKEN_VISIBILITY);
+    } else if ('insertText' === inputType) {
+        setStyle(hint, TOKEN_VISIBILITY, 'hidden');
+    }
 }
 
 function onKeyDownTextInput(e) {
@@ -87,12 +108,26 @@ function onKeyDownTextInput(e) {
         picker = getReference($),
         {_mask, self, state} = picker,
         {hint} = _mask;
-    delay(() => getText($, 0) ? setStyle(hint, 'color', 'transparent') : letStyle(hint, 'color'), 1)();
+    delay(() => getText($, 0) ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY), 1)();
     exit && (offEventDefault(e), offEventPropagation(e));
 }
 
+function onPasteTextInput(e) {
+}
+
 function onPointerDownMask(e) {
-    focusTo(getReference(this)), offEventDefault(e);
+    offEventDefault(e);
+    let $ = this,
+        picker = getReference($),
+        {_mask, self} = picker,
+        {target} = e;
+    if (isDisabled(self) || isReadOnly(self)) {
+        return;
+    }
+    if ('listbox' === getRole(target) || getParent(target, '[role=listbox]')) {
+        return;
+    }
+    focusTo(picker);
 }
 
 function NumberPicker(self, state) {
@@ -256,10 +291,11 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         setChildLast(step, stepDown);
         setChildLast(step, stepUp);
         // onEvent(EVENT_BLUR, textInput, onBlurTextInput);
-        // onEvent(EVENT_CUT, textInput, onCutTextInput);
         // onEvent(EVENT_FOCUS, textInput, onFocusTextInput);
+        onEvent(EVENT_CUT, textInput, onCutTextInput);
+        onEvent(EVENT_INPUT, textInput, onInputTextInput);
         onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
-        // onEvent(EVENT_PASTE, textInput, onPasteTextInput);
+        onEvent(EVENT_PASTE, textInput, onPasteTextInput);
         setChildLast(text, textInput);
         setChildLast(text, textInputHint);
         setReference(textInput, $);
@@ -345,11 +381,11 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         //     offEvent(EVENT_SUBMIT, form, onSubmitForm);
         // }
         // offEvent(EVENT_BLUR, input, onBlurTextInput);
-        // offEvent(EVENT_CUT, input, onCutTextInput);
         // offEvent(EVENT_FOCUS, input, onFocusTextInput);
-        offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
-        // offEvent(EVENT_PASTE, input, onPasteTextInput);
         // offEvent(EVENT_FOCUS, self, onFocusSelf);
+        offEvent(EVENT_CUT, input, onCutTextInput);
+        offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
+        offEvent(EVENT_PASTE, input, onPasteTextInput);
 
         // offEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
         offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);

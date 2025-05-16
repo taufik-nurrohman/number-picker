@@ -294,6 +294,9 @@
         }
         return getParent(node, state);
     };
+    var getRole = function getRole(node) {
+        return getAttribute(node, 'role');
+    };
     var getText = function getText(node, trim) {
         var state = 'textContent';
         if (!hasState(node, state)) {
@@ -603,19 +606,41 @@
         node.addEventListener(name, then, options);
     };
     var EVENT_DOWN = 'down';
+    var EVENT_CUT = 'cut';
     var EVENT_KEY = 'key';
     var EVENT_KEY_DOWN = EVENT_KEY + EVENT_DOWN;
     var EVENT_MOUSE = 'mouse';
     var EVENT_MOUSE_DOWN = EVENT_MOUSE + EVENT_DOWN;
+    var EVENT_PASTE = 'paste';
     var EVENT_TOUCH = 'touch';
     var EVENT_TOUCH_START = EVENT_TOUCH + 'start';
     var TOKEN_FALSE = 'false';
     var TOKEN_TAB_INDEX = 'tabIndex';
     var TOKEN_TRUE = 'true';
+    var TOKEN_VISIBILITY = 'visibility';
     var name = 'NumberPicker';
 
     function focusTo(node) {
         return node.focus(), node;
+    }
+
+    function onCutTextInput(e) {}
+
+    function onInputTextInput(e) {
+        var $ = this,
+            inputType = e.inputType,
+            picker = getReference($),
+            _active = picker._active;
+        if (!_active) {
+            return offEventDefault(e);
+        }
+        var _mask = picker._mask,
+            hint = _mask.hint;
+        if ('deleteContent' === inputType.slice(0, 13) && !getText($)) {
+            letStyle(hint, TOKEN_VISIBILITY);
+        } else if ('insertText' === inputType) {
+            setStyle(hint, TOKEN_VISIBILITY, 'hidden');
+        }
     }
 
     function onKeyDownTextInput(e) {
@@ -627,12 +652,26 @@
         picker.state;
         var hint = _mask.hint;
         delay(function () {
-            return getText($) ? setStyle(hint, 'color', 'transparent') : letStyle(hint, 'color');
+            return getText($) ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
         }, 1)();
     }
 
+    function onPasteTextInput(e) {}
+
     function onPointerDownMask(e) {
-        focusTo(getReference(this)), offEventDefault(e);
+        offEventDefault(e);
+        var $ = this,
+            picker = getReference($);
+        picker._mask;
+        var self = picker.self,
+            target = e.target;
+        if (isDisabled(self) || isReadOnly(self)) {
+            return;
+        }
+        if ('listbox' === getRole(target) || getParent(target, '[role=listbox]')) {
+            return;
+        }
+        focusTo(picker);
     }
 
     function NumberPicker(self, state) {
@@ -785,10 +824,11 @@
             setChildLast(step, stepDown);
             setChildLast(step, stepUp);
             // onEvent(EVENT_BLUR, textInput, onBlurTextInput);
-            // onEvent(EVENT_CUT, textInput, onCutTextInput);
             // onEvent(EVENT_FOCUS, textInput, onFocusTextInput);
+            onEvent(EVENT_CUT, textInput, onCutTextInput);
+            onEvent(EVENT_INPUT, textInput, onInputTextInput);
             onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
-            // onEvent(EVENT_PASTE, textInput, onPasteTextInput);
+            onEvent(EVENT_PASTE, textInput, onPasteTextInput);
             setChildLast(text, textInput);
             setChildLast(text, textInputHint);
             setReference(textInput, $);
@@ -877,11 +917,11 @@
             //     offEvent(EVENT_SUBMIT, form, onSubmitForm);
             // }
             // offEvent(EVENT_BLUR, input, onBlurTextInput);
-            // offEvent(EVENT_CUT, input, onCutTextInput);
             // offEvent(EVENT_FOCUS, input, onFocusTextInput);
-            offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
-            // offEvent(EVENT_PASTE, input, onPasteTextInput);
             // offEvent(EVENT_FOCUS, self, onFocusSelf);
+            offEvent(EVENT_CUT, input, onCutTextInput);
+            offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
+            offEvent(EVENT_PASTE, input, onPasteTextInput);
             // offEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
             offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
             // offEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
