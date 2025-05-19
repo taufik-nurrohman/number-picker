@@ -954,13 +954,13 @@
                 picker.fire('max.number', [value, max]);
             } else if (value < min) {
                 picker.fire('min.number', [value, min]);
-            } else {
-                letAria(mask, TOKEN_INVALID);
-                picker.fire('is.number', [value]);
             }
             if (strict) {
                 return;
             }
+        } else {
+            letAria(mask, TOKEN_INVALID);
+            picker.fire('is.number', [value]);
         }
         setValue(self, value += ""), picker.fire('change', ["" !== value ? value : null]);
     }
@@ -1223,6 +1223,9 @@
                     if (strict) {
                         return $;
                     }
+                } else {
+                    letAria(mask, TOKEN_INVALID);
+                    $.fire('is.number', [value]);
                 }
                 return setValue(self, v), $.fire('change', ["" !== v ? v : null]);
             }
