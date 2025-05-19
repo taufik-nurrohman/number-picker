@@ -110,10 +110,13 @@ function onBlurTextInput() {
 }
 
 function onCutTextInput(e) {
+    let $ = this,
+        picker = getReference($);
+    picker.value = getText($);
 }
 
 function onFocusTextInput() {
-    selectTo($);
+    selectTo(this);
 }
 
 function onInputTextInput(e) {
@@ -171,6 +174,11 @@ function onKeyDownTextInput(e) {
 }
 
 function onPasteTextInput(e) {
+    offEventDefault(e);
+    let $ = this,
+        picker = getReference($);
+    insertAtSelection($, e.clipboardData.getData('text/plain'));
+    picker.value = getText($);
 }
 
 function onPointerDownMask(e) {
