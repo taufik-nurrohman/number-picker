@@ -27,6 +27,69 @@
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = f() : typeof define === 'function' && define.amd ? define(f) : (g = typeof globalThis !== 'undefined' ? globalThis : g || self, g.NumberPicker = f());
 })(this, (function () {
     'use strict';
+
+    function _arrayLikeToArray(r, a) {
+        (null == a || a > r.length) && (a = r.length);
+        for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+        return n;
+    }
+
+    function _arrayWithHoles(r) {
+        if (Array.isArray(r)) return r;
+    }
+
+    function _iterableToArrayLimit(r, l) {
+        var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+        if (null != t) {
+            var e,
+                n,
+                i,
+                u,
+                a = [],
+                f = true,
+                o = false;
+            try {
+                if (i = (t = t.call(r)).next, 0 === l) {
+                    if (Object(t) !== t) return;
+                    f = !1;
+                } else
+                    for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+            } catch (r) {
+                o = true, n = r;
+            } finally {
+                try {
+                    if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+                } finally {
+                    if (o) throw n;
+                }
+            }
+            return a;
+        }
+    }
+
+    function _maybeArrayLike(r, a, e) {
+        if (a && !Array.isArray(a) && "number" == typeof a.length) {
+            var y = a.length;
+            return _arrayLikeToArray(a, e < y ? e : y);
+        }
+        return r(a, e);
+    }
+
+    function _nonIterableRest() {
+        throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+    }
+
+    function _slicedToArray(r, e) {
+        return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+    }
+
+    function _unsupportedIterableToArray(r, a) {
+        if (r) {
+            if ("string" == typeof r) return _arrayLikeToArray(r, a);
+            var t = {}.toString.call(r).slice(8, -1);
+            return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+        }
+    }
     var isArray = function isArray(x) {
         return Array.isArray(x);
     };
@@ -44,6 +107,9 @@
             return isSet(of) && isSet(x.constructor) && of === x.constructor;
         }
         return isSet(of) && x instanceof of ;
+    };
+    var isInteger = function isInteger(x) {
+        return isNumber(x) && 0 === x % 1;
     };
     var isNull = function isNull(x) {
         return null === x;
@@ -248,10 +314,12 @@
     };
     var references = new WeakMap();
 
-    function _toArray(iterable) {
+    function _toArray$1(iterable) {
         return Array.from(iterable);
     }
     var D = document;
+    var W = window;
+    var R = D.documentElement;
     var getAttribute = function getAttribute(node, attribute, parseValue) {
         if (parseValue === void 0) {
             parseValue = true;
@@ -263,7 +331,7 @@
         return parseValue ? _toValue(value) : value;
     };
     var getChildren = function getChildren(parent, index, anyNode) {
-        var children = _toArray(parent['child' + ('Nodes')]);
+        var children = _toArray$1(parent['child' + ('Nodes')]);
         return isNumber(index) ? children[index] || null : children;
     };
     var getID = function getID(node, batch) {
@@ -294,16 +362,16 @@
         }
         return getParent(node, state);
     };
-    var getRole = function getRole(node) {
-        return getAttribute(node, 'role');
-    };
     var getText = function getText(node, trim) {
+        if (trim === void 0) {
+            trim = true;
+        }
         var state = 'textContent';
         if (!hasState(node, state)) {
             return false;
         }
         var content = node[state];
-        content = content;
+        content = trim ? content.trim() : content;
         return "" !== content ? content : null;
     };
     var getType = function getType(node) {
@@ -470,6 +538,22 @@
             v || "" === v || 0 === v ? setStyle(node, k, v) : letStyle(node, k);
         }), node;
     };
+    var setText = function setText(node, content, trim) {
+        if (trim === void 0) {
+            trim = true;
+        }
+        if (null === content) {
+            return node;
+        }
+        var state = 'textContent';
+        return hasState(node, state) && (node[state] = trim ? content.trim() : content), node;
+    };
+    var setValue = function setValue(node, value) {
+        if (null === value) {
+            return letAttribute(node, 'value');
+        }
+        return node.value = _fromValue(value), node;
+    };
     var theID = {};
     var _getSelection = function _getSelection() {
         return D.getSelection();
@@ -532,14 +616,55 @@
         }
         return selection.addRange(range), selection;
     };
-    var delay = function delay(then, time) {
-        return function () {
-            var _arguments2 = arguments,
-                _this2 = this;
-            setTimeout(function () {
-                return then.apply(_this2, _arguments2);
+
+    function _toArray(iterable) {
+        return Array.from(iterable);
+    }
+    var clearTimeout = W.clearTimeout,
+        setTimeout = W.setTimeout; // For better minification
+    var delay = function delay(task, time) {
+        var stickyTime = isInteger(time) && time >= 0,
+            timer;
+        return [function () {
+            var _this2 = this;
+            var lot = _toArray(arguments);
+            if (!stickyTime) {
+                time = lot.shift();
+            }
+            timer = setTimeout(function () {
+                return task.apply(_this2, lot);
             }, time);
-        };
+        }, function () {
+            timer && clearTimeout(timer);
+        }];
+    };
+    var repeat = function repeat(task, start, step) {
+        var stickyStart = isInteger(start) && start >= 0,
+            stickyStep = isInteger(step) && step >= 0,
+            timerToRepeat,
+            timerToStart;
+        return [function () {
+            var _this3 = this;
+            var lot = _toArray(arguments);
+            if (!stickyStart) {
+                start = lot.shift();
+            }
+            if (!stickyStep) {
+                step = lot.shift();
+            }
+            var _r = function r() {
+                task.apply(_this3, lot);
+                timerToRepeat = setTimeout(_r, step);
+            };
+            if (start > 0) {
+                timerToStart = setTimeout(_r, start);
+            } else {
+                _r();
+            }
+        }, function () {
+            timerToRepeat && clearTimeout(timerToRepeat);
+            timerToStart && clearTimeout(timerToStart);
+        }];
     };
 
     function hook($, $$) {
@@ -606,41 +731,118 @@
         node.addEventListener(name, then, options);
     };
     var EVENT_DOWN = 'down';
+    var EVENT_UP = 'up';
+    var EVENT_BLUR = 'blur';
     var EVENT_CUT = 'cut';
+    var EVENT_FOCUS = 'focus';
+    var EVENT_INPUT = 'input';
+    var EVENT_INVALID = 'invalid';
     var EVENT_KEY = 'key';
     var EVENT_KEY_DOWN = EVENT_KEY + EVENT_DOWN;
     var EVENT_MOUSE = 'mouse';
     var EVENT_MOUSE_DOWN = EVENT_MOUSE + EVENT_DOWN;
+    var EVENT_MOUSE_UP = EVENT_MOUSE + EVENT_UP;
     var EVENT_PASTE = 'paste';
     var EVENT_TOUCH = 'touch';
+    var EVENT_TOUCH_END = EVENT_TOUCH + 'end';
     var EVENT_TOUCH_START = EVENT_TOUCH + 'start';
+    var EVENT_WHEEL = 'wheel';
     var TOKEN_FALSE = 'false';
+    var TOKEN_INVALID = EVENT_INVALID;
     var TOKEN_TAB_INDEX = 'tabIndex';
     var TOKEN_TRUE = 'true';
     var TOKEN_VISIBILITY = 'visibility';
     var name = 'NumberPicker';
+    var _repeat = repeat(function (picker, step) {
+            var $ = this,
+                max = picker.max,
+                min = picker.min,
+                value = picker.value;
+            value = +(value != null ? value : 0) + step;
+            if (value > max || value < min) {
+                return repeatStop(), focusTo($);
+            }
+            picker.value = value, focusTo($);
+        }),
+        _repeat2 = _maybeArrayLike(_slicedToArray, _repeat, 2),
+        repeatStart = _repeat2[0],
+        repeatStop = _repeat2[1];
 
     function focusTo(node) {
         return node.focus(), node;
     }
 
+    function onBlurTextInput() {
+        var $ = this,
+            picker = getReference($),
+            mask = picker.mask,
+            state = picker.state,
+            error = state.error;
+        if (isNumber(error) && error > 0) {
+            delay(function () {
+                return letAria(mask, TOKEN_INVALID);
+            })(error);
+        } else {
+            letAria(mask, TOKEN_INVALID);
+        }
+    }
+
     function onCutTextInput(e) {}
+
+    function onFocusTextInput() {
+        var $ = this,
+            picker = getReference($),
+            mask = picker.mask,
+            max = picker.max,
+            min = picker.min,
+            step = picker.step,
+            value = picker.value;
+        if (!isNumber(value = +value) || 0 !== value % step || value > max || value < min) {
+            setAria(mask, TOKEN_INVALID, true);
+        }
+        selectTo($);
+    }
 
     function onInputTextInput(e) {
         var $ = this,
             inputType = e.inputType,
             picker = getReference($),
-            _active = picker._active;
+            _active = picker._active,
+            self = picker.self,
+            v,
+            value = +(v = getText($));
         if (!_active) {
             return offEventDefault(e);
         }
         var _mask = picker._mask,
+            mask = picker.mask,
+            max = picker.max,
+            min = picker.min,
+            step = picker.step,
             hint = _mask.hint;
-        if ('deleteContent' === inputType.slice(0, 13) && !getText($)) {
+        if ('deleteContent' === inputType.slice(0, 13) && 0 === value) {
             letStyle(hint, TOKEN_VISIBILITY);
         } else if ('insertText' === inputType) {
             setStyle(hint, TOKEN_VISIBILITY, 'hidden');
         }
+        if (!isNumber(value)) {
+            picker.fire('not.number', [v]);
+            return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
+        }
+        if (0 !== value % step) {
+            picker.fire('not.value', [v]);
+            return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
+        }
+        if (value > max) {
+            picker.fire('max.number', [value, max]);
+            return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
+        }
+        if (value < min) {
+            picker.fire('min.number', [value, min]);
+            return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
+        }
+        letAria(mask, TOKEN_INVALID), picker.fire('is.number', [value]);
+        setValue(self, value += ""), picker.fire('change', [value]);
     }
 
     function onKeyDownTextInput(e) {
@@ -650,10 +852,7 @@
             _mask = picker._mask;
         picker.self;
         picker.state;
-        var hint = _mask.hint;
-        delay(function () {
-            return getText($) ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
-        }, 1)();
+        _mask.hint;
     }
 
     function onPasteTextInput(e) {}
@@ -661,17 +860,114 @@
     function onPointerDownMask(e) {
         offEventDefault(e);
         var $ = this,
-            picker = getReference($);
-        picker._mask;
-        var self = picker.self,
-            target = e.target;
-        if (isDisabled(self) || isReadOnly(self)) {
+            picker = getReference($),
+            _active = picker._active;
+        if (!_active) {
             return;
         }
-        if ('listbox' === getRole(target) || getParent(target, '[role=listbox]')) {
+        var _mask = picker._mask,
+            mask = picker.mask,
+            state = picker.state,
+            _step = _mask._step,
+            down = _step.down,
+            up = _step.up;
+        state.n;
+        var target = e.target,
+            targetDown = target,
+            targetUp = target;
+        if (down === targetDown) {
             return;
+        }
+        while (mask !== targetDown) {
+            targetDown = getParent(targetDown);
+            if (down === targetDown) {
+                return;
+            }
+        }
+        if (up === targetUp) {
+            return;
+        }
+        while (mask !== targetUp) {
+            targetUp = getParent(targetUp);
+            if (up === targetUp) {
+                return;
+            }
         }
         focusTo(picker);
+    }
+
+    function onPointerDownStepDown(e) {
+        offEventDefault(e);
+        var $ = this,
+            picker = getReference($),
+            _active = picker._active,
+            _fix = picker._fix;
+        if (!_active) {
+            return;
+        }
+        if (_fix) {
+            return focusTo(picker);
+        }
+        picker._mask;
+        picker.max;
+        var min = picker.min,
+            step = picker.step,
+            value = picker.value;
+        if ((value = +(value != null ? value : 0) - step) < min) {
+            return picker.value = min, focusTo($);
+        }
+        picker.value = value, focusTo($);
+        if (EVENT_WHEEL !== e.type) {
+            repeatStart.call($, 500, 100, picker, -step);
+        }
+    }
+
+    function onPointerDownStepUp(e) {
+        offEventDefault(e);
+        var $ = this,
+            picker = getReference($),
+            _active = picker._active,
+            _fix = picker._fix;
+        if (!_active) {
+            return;
+        }
+        if (_fix) {
+            return focusTo(picker);
+        }
+        picker._mask;
+        var max = picker.max;
+        picker.min;
+        var step = picker.step,
+            value = picker.value;
+        if ((value = +(value != null ? value : 0) + step) > max) {
+            return picker.value = max, focusTo($);
+        }
+        picker.value = value, focusTo($);
+        if (EVENT_WHEEL !== e.type) {
+            repeatStart.call($, 500, 100, picker, step);
+        }
+    }
+
+    function onPointerUpRoot() {
+        repeatStop();
+    }
+
+    function onWheelMask(e) {
+        offEventDefault(e);
+        var $ = this,
+            picker = getReference($),
+            _mask = picker._mask,
+            _step = _mask._step,
+            down = _step.down,
+            up = _step.up,
+            deltaY = e.deltaY;
+        // Wheel up
+        if (deltaY < 0) {
+            onPointerDownStepUp.call(up, e);
+            // Wheel down
+        } else {
+            onPointerDownStepDown.call(down, e);
+        }
     }
 
     function NumberPicker(self, state) {
@@ -695,6 +991,9 @@
         'min': null,
         'n': 'number-picker',
         'step': null,
+        'time': {
+            'error': 1000
+        },
         'with': []
     };
     NumberPicker.version = '1.0.0';
@@ -719,19 +1018,62 @@
             set: function set(value) {}
         },
         max: {
-            get: function get() {},
-            set: function set(value) {}
+            get: function get() {
+                var max = this.state.max;
+                return Infinity === (max = +max) || isNumber(max) && max >= 0 ? max : Infinity;
+            },
+            set: function set(value) {
+                var $ = this;
+                return $.state.max = isNumber(value = +value) && value >= 0 ? value : Infinity, $;
+            }
         },
         min: {
-            get: function get() {},
-            set: function set(value) {}
+            get: function get() {
+                var min = this.state.min;
+                return -Infinity === (min = +min) || isNumber(min) && min >= 0 ? min : -Infinity;
+            },
+            set: function set(value) {
+                var $ = this;
+                return $.state.min = isNumber(value = +value) && value >= 0 ? value : -Infinity, $;
+            }
+        },
+        step: {
+            get: function get() {
+                var step = this.state.step;
+                return isNumber(step = +step) && step > 0 ? step : 1;
+            },
+            set: function set(value) {
+                var $ = this;
+                return $.state.step = isNumber(value = +value) && value > 0 ? value : 1, $;
+            }
         },
         value: {
             get: function get() {
                 var value = getValue(this.self);
                 return "" !== value ? value : null;
             },
-            set: function set(value) {}
+            set: function set(value) {
+                var $ = this,
+                    _active = $._active;
+                if (!_active) {
+                    return $;
+                }
+                value = +value;
+                var _mask = $._mask,
+                    mask = $.mask,
+                    max = $.max,
+                    min = $.min,
+                    self = $.self,
+                    hint = _mask.hint,
+                    input = _mask.input;
+                if (!isNumber(value) || value < min || value > max) {
+                    return setAria(mask, TOKEN_INVALID, true), $;
+                }
+                "" !== (value += "") ? setStyle(hint, TOKEN_VISIBILITY, 'hidden'): letStyle(hint, TOKEN_VISIBILITY);
+                setText(input, value);
+                setValue(self, value);
+                return $.fire('change', [value]);
+            }
         },
         vital: {
             get: function get() {
@@ -742,6 +1084,7 @@
     });
     NumberPicker._ = setObjectMethods(NumberPicker, {
         attach: function attach(self, state) {
+            var _ref, _ref2, _ref3;
             var $ = this;
             self = self || $.self;
             state = state || $.state;
@@ -752,30 +1095,32 @@
                 max = _state.max,
                 min = _state.min,
                 n = _state.n,
+                step = _state.step,
                 isDisabledSelf = isDisabled(self),
                 isReadOnlySelf = isReadOnly(self),
                 isRequiredSelf = isRequired(self),
-                theInputID = self.id;
-            self.max;
-            var theInputMin = self.min,
+                theInputID = self.id,
+                theInputMax = self.max,
+                theInputMin = self.min,
                 theInputName = self.name,
-                theInputPlaceholder = self.placeholder || theInputMin;
-            self.step;
+                theInputPlaceholder = self.placeholder || theInputMin,
+                theInputStep = self.step,
+                theInputValue = getValue(self);
             $._active = !isDisabledSelf && !isReadOnlySelf;
             $._fix = isReadOnlySelf;
             $._vital = isRequiredSelf;
-            var step = setElement('span', {
+            var stepDown = setElement('span', {
+                'class': n + '__step-down',
+                'tabindex': -1
+            });
+            var stepFlex = setElement('span', {
                 'aria': {
                     'hidden': TOKEN_TRUE
                 },
-                'class': n + '__step-batch'
-            });
-            var stepDown = setElement('span', {
-                'class': n + '__step ' + n + '__step-down',
-                'tabindex': -1
+                'class': n + '__step'
             });
             var stepUp = setElement('span', {
-                'class': n + '__step ' + n + '__step-up',
+                'class': n + '__step-up',
                 'tabindex': -1
             });
             getParentForm(self);
@@ -820,17 +1165,24 @@
             });
             setChildLast(mask, maskFlex);
             setChildLast(maskFlex, text);
-            setChildLast(maskFlex, step);
-            setChildLast(step, stepDown);
-            setChildLast(step, stepUp);
-            // onEvent(EVENT_BLUR, textInput, onBlurTextInput);
-            // onEvent(EVENT_FOCUS, textInput, onFocusTextInput);
+            setChildLast(maskFlex, stepFlex);
+            setChildLast(stepFlex, stepUp);
+            setChildLast(stepFlex, stepDown);
+            onEvent(EVENT_BLUR, textInput, onBlurTextInput);
             onEvent(EVENT_CUT, textInput, onCutTextInput);
+            onEvent(EVENT_FOCUS, textInput, onFocusTextInput);
             onEvent(EVENT_INPUT, textInput, onInputTextInput);
             onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
+            onEvent(EVENT_MOUSE_DOWN, stepDown, onPointerDownStepDown);
+            onEvent(EVENT_MOUSE_DOWN, stepUp, onPointerDownStepUp);
             onEvent(EVENT_PASTE, textInput, onPasteTextInput);
+            onEvent(EVENT_TOUCH_START, stepDown, onPointerDownStepDown);
+            onEvent(EVENT_TOUCH_START, stepUp, onPointerDownStepUp);
+            onEvent(EVENT_WHEEL, mask, onWheelMask);
             setChildLast(text, textInput);
             setChildLast(text, textInputHint);
+            setReference(stepDown, $);
+            setReference(stepUp, $);
             setReference(textInput, $);
             setClass(self, n + '__self');
             setNext(self, mask);
@@ -845,26 +1197,32 @@
             // onEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
             onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
             // onEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
-            // onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
+            onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
             // onEvent(EVENT_RESIZE, W, onResizeWindow, {passive: true});
             // onEvent(EVENT_SCROLL, W, onScrollWindow, {passive: true});
-            // onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
+            onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
             // onEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot, {passive: true});
             // onEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
             onEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
             self[TOKEN_TAB_INDEX] = -1;
             setReference(mask, $);
             $._mask = {
-                // arrow: arrow,
+                _step: {
+                    down: stepDown,
+                    self: stepFlex,
+                    up: stepUp
+                },
                 flex: maskFlex,
                 hint: textInputHint,
                 input: textInput,
                 of: self,
-                self: mask
+                self: mask,
+                step: stepFlex
             };
             // Re-assign some state value(s) using the setter to either normalize or reject the initial value
-            $.max = max = max != null ? max : Infinity;
-            $.min = min = min != null ? min : -Infinity;
+            $.max = max = (_ref = theInputMax != null ? theInputMax : max) != null ? _ref : Infinity;
+            $.min = min = (_ref2 = theInputMin != null ? theInputMin : min) != null ? _ref2 : -Infinity;
+            $.step = step = (_ref3 = theInputStep != null ? theInputStep : step) != null ? _ref3 : 1;
             var _active = $._active;
             // Force the `this._active` value to `true` to set the initial value
             $._active = true;
@@ -876,13 +1234,14 @@
             setID(mask);
             setID(maskFlex);
             setID(self);
-            setID(step);
             setID(stepDown);
+            setID(stepFlex);
             setID(stepUp);
             setID(textInput);
             setID(textInputHint);
             theInputID && setDatum(mask, 'id', theInputID);
             theInputName && setDatum(mask, 'name', theInputName);
+            theInputValue && ($.value = theInputValue);
             // Attach extension(s)
             if (isSet(state) && isArray(state.with)) {
                 forEachArray(state.with, function (v, k) {
@@ -916,8 +1275,8 @@
             //     offEvent(EVENT_RESET, form, onResetForm);
             //     offEvent(EVENT_SUBMIT, form, onSubmitForm);
             // }
-            // offEvent(EVENT_BLUR, input, onBlurTextInput);
-            // offEvent(EVENT_FOCUS, input, onFocusTextInput);
+            offEvent(EVENT_BLUR, input, onBlurTextInput);
+            offEvent(EVENT_FOCUS, input, onFocusTextInput);
             // offEvent(EVENT_FOCUS, self, onFocusSelf);
             offEvent(EVENT_CUT, input, onCutTextInput);
             offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
@@ -925,13 +1284,14 @@
             // offEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
             offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
             // offEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
-            // offEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
+            offEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
             // offEvent(EVENT_RESIZE, W, onResizeWindow);
             // offEvent(EVENT_SCROLL, W, onScrollWindow);
-            // offEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
+            offEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
             // offEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot);
             // offEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
             offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
+            offEvent(EVENT_WHEEL, mask, onWheelMask);
             // Detach extension(s)
             if (isArray(state.with)) {
                 forEachArray(state.with, function (v, k) {

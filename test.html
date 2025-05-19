@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta content="width=device-width" name="viewport">
-    <meta content="Accessible custom `&lt;select&gt;` (and `&lt;input list&gt;`) element." name="description">
+    <meta content="Accessible custom `&lt;input type=&quot;number&quot;&gt;` element." name="description">
     <title>Number Picker</title>
     <link href="index.min.css" rel="stylesheet">
     <style>
@@ -16,7 +16,7 @@
     <main>
       <p><input max="25" min="0" step="1" type="number"></p>
     </main>
-    <script src="index.min.js"></script>
+    <script src="index.js"></script>
     <script>
       const picker = new NumberPicker(document.querySelector('input'));
       picker.on('max.number', function (current, max) {

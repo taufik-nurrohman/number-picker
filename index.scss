@@ -43,7 +43,11 @@ $name: 'number-picker';
       pointer-events: none;
     }
   }
-  &__step,
+  &[aria-invalid='true'] {
+    color: rgb(255, 0, 0);
+  }
+  &__step-down,
+  &__step-up,
   &__text {
     @extend %item;
     overflow: hidden;
@@ -73,10 +77,42 @@ $name: 'number-picker';
     text-shadow: none;
     width: 1px;
   }
-  &__step-batch {
+  &__step {
     display: flex;
     flex-direction: column;
     gap: 1px;
+    &-down,
+    &-up {
+      flex: 1;
+      &:focus {
+        outline: 1px solid;
+        outline-offset: -2px;
+      }
+      &::after {
+        border: 0 solid transparent;
+        border-width: 0 0.25em;
+        content: "";
+        display: block;
+        height: 0;
+        width: 0;
+      }
+    }
+    &-down {
+      &::after {
+        border-top: {
+          color: inherit;
+          width: 0.25em;
+        }
+      }
+    }
+    &-up {
+      &::after {
+        border-bottom: {
+          color: inherit;
+          width: 0.25em;
+        }
+      }
+    }
   }
   &__text {
     border-color: transparent;
@@ -111,31 +147,4 @@ $name: 'number-picker';
       }
     }
   }
-}
-
-.number-picker__step {
-  flex: 1;
-  &:focus {
-    outline: 1px solid;
-    outline-offset: -2px;
-  }
-}
-
-.number-picker__step::after {
-  content: "";
-  display: block;
-  width: 0;
-  height: 0;
-  border: 0 solid transparent;
-  border-width: 0 0.25em;
-}
-
-.number-picker__step:first-child::after {
-  border-bottom-width: 0.25em;
-  border-bottom-color: inherit;
-}
-
-.number-picker__step:last-child::after {
-  border-top-width: 0.25em;
-  border-top-color: inherit;
 }
