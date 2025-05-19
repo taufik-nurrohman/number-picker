@@ -101,6 +101,7 @@ function onBlurTextInput() {
         picker = getReference($),
         {mask, state} = picker,
         {error} = state;
+    // TODO: Validate value on blur
     if (isNumber(error) && error > 0) {
         delay(() => letAria(mask, TOKEN_INVALID))(error);
     } else {
@@ -112,12 +113,6 @@ function onCutTextInput(e) {
 }
 
 function onFocusTextInput() {
-    let $ = this,
-        picker = getReference($),
-        {mask, max, min, step, value} = picker;
-    if (!isNumber(value = +value) || 0 !== (value % step) || value > max || value < min) {
-        setAria(mask, TOKEN_INVALID, true);
-    }
     selectTo($);
 }
 

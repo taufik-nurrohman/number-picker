@@ -778,6 +778,7 @@
             mask = picker.mask,
             state = picker.state,
             error = state.error;
+        // TODO: Validate value on blur
         if (isNumber(error) && error > 0) {
             delay(function () {
                 return letAria(mask, TOKEN_INVALID);
@@ -790,16 +791,6 @@
     function onCutTextInput(e) {}
 
     function onFocusTextInput() {
-        var $ = this,
-            picker = getReference($),
-            mask = picker.mask,
-            max = picker.max,
-            min = picker.min,
-            step = picker.step,
-            value = picker.value;
-        if (!isNumber(value = +value) || 0 !== value % step || value > max || value < min) {
-            setAria(mask, TOKEN_INVALID, true);
-        }
         selectTo($);
     }
 
