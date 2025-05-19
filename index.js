@@ -836,7 +836,9 @@
     function onCutTextInput(e) {
         var $ = this,
             picker = getReference($);
-        picker.value = getText($);
+        delay(function () {
+            return picker.value = getText($);
+        })[0](1);
     }
 
     function onFocusTextInput() {
@@ -882,7 +884,7 @@
             return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
         }
         letAria(mask, TOKEN_INVALID), picker.fire('is.number', [value]);
-        setValue(self, value += ""), picker.fire('change', [value]);
+        setValue(self, value += ""), picker.fire('change', ["" !== value ? value : null]);
     }
 
     function onKeyDownTextInput(e) {
@@ -900,7 +902,9 @@
         var $ = this,
             picker = getReference($);
         insertAtSelection($, e.clipboardData.getData('text/plain'));
-        picker.value = getText($);
+        delay(function () {
+            return picker.value = getText($), selectTo($);
+        })[0](1);
     }
 
     function onPointerDownMask(e) {
@@ -1100,11 +1104,12 @@
             },
             set: function set(value) {
                 var $ = this,
-                    _active = $._active;
+                    _active = $._active,
+                    v;
                 if (!_active) {
                     return $;
                 }
-                value = +value;
+                value = +(v = (value != null ? value : "") + "");
                 var _mask = $._mask,
                     mask = $.mask,
                     max = $.max,
@@ -1112,13 +1117,13 @@
                     self = $.self,
                     hint = _mask.hint,
                     input = _mask.input;
+                setText(input, v);
+                "" !== v ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
                 if (!isNumber(value) || value < min || value > max) {
                     return setAria(mask, TOKEN_INVALID, true), $;
                 }
-                "" !== (value += "") ? setStyle(hint, TOKEN_VISIBILITY, 'hidden'): letStyle(hint, TOKEN_VISIBILITY);
-                setText(input, value);
-                setValue(self, value);
-                return $.fire('change', [value]);
+                setValue(self, v);
+                return $.fire('change', ["" !== v ? v : null]);
             }
         },
         vital: {

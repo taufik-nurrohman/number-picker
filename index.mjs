@@ -112,7 +112,7 @@ function onBlurTextInput() {
 function onCutTextInput(e) {
     let $ = this,
         picker = getReference($);
-    picker.value = getText($);
+    delay(() => picker.value = getText($))[0](1);
 }
 
 function onFocusTextInput() {
@@ -152,7 +152,7 @@ function onInputTextInput(e) {
         return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
     }
     letAria(mask, TOKEN_INVALID), picker.fire('is.number', [value]);
-    setValue(self, value += ""), picker.fire('change', [value]);
+    setValue(self, value += ""), picker.fire('change', ["" !== value ? value : null]);
 }
 
 function onInvalidSelf(e) {
@@ -178,7 +178,7 @@ function onPasteTextInput(e) {
     let $ = this,
         picker = getReference($);
     insertAtSelection($, e.clipboardData.getData('text/plain'));
-    picker.value = getText($);
+    delay(() => (picker.value = getText($), selectTo($)))[0](1);
 }
 
 function onPointerDownMask(e) {
@@ -371,20 +371,20 @@ setObjectAttributes(NumberPicker, {
         },
         set: function (value) {
             let $ = this,
-                {_active} = $;
+                {_active} = $, v;
             if (!_active) {
                 return $;
             }
-            value = +value;
+            value = +(v = (value ?? "") + "");
             let {_mask, mask, max, min, self} = $,
                 {hint, input} = _mask;
+            setText(input, v);
+            "" !== v ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
             if (!isNumber(value) || value < min || value > max) {
                 return setAria(mask, TOKEN_INVALID, true), $;
             }
-            "" !== (value += "") ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
-            setText(input, value);
-            setValue(self, value);
-            return $.fire('change', [value]);
+            setValue(self, v);
+            return $.fire('change', ["" !== v ? v : null]);
         }
     },
     vital: {
