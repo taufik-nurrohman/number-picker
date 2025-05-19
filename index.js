@@ -775,6 +775,12 @@
         }
         node.addEventListener(name, then, options);
     };
+    var _delay = delay(function (mask) {
+            return letAria(mask, TOKEN_INVALID);
+        }),
+        _delay2 = _maybeArrayLike(_slicedToArray, _delay, 2),
+        delayErrorRemove = _delay2[0],
+        delayErrorRemoveReset = _delay2[1];
     var EVENT_DOWN = 'down';
     var EVENT_UP = 'up';
     var EVENT_BLUR = 'blur';
@@ -854,22 +860,27 @@
         return node.focus(), node;
     }
 
-    function onBlurTextInput() {
+    function onBlurStepDown() {
         var $ = this,
             picker = getReference($),
             mask = picker.mask,
-            state = picker.state;
-        state.strict;
-        var time = state.time,
+            state = picker.state,
+            time = state.time,
             error = time.error;
-        // TODO: Validate value on blur
         if (isInteger(error) && error > 0) {
-            delay(function () {
-                return letAria(mask, TOKEN_INVALID);
-            })[0](error);
+            delayErrorRemove(error, mask);
         } else {
             letAria(mask, TOKEN_INVALID);
         }
+    }
+
+    function onBlurStepUp() {
+        onBlurStepDown.call(this);
+    }
+
+    function onBlurTextInput() {
+        // TODO: Validate value on blur
+        onBlurStepDown.call(this);
     }
 
     function onCutTextInput(e) {
@@ -884,8 +895,28 @@
         getReference(this).focus();
     }
 
+    function onFocusStepDown() {
+        delayErrorRemoveReset();
+    }
+
+    function onFocusStepUp() {
+        onFocusStepDown();
+    }
+
     function onFocusTextInput() {
-        selectTo(this);
+        delayErrorRemoveReset();
+        var $ = this,
+            picker = getReference($),
+            mask = picker.mask,
+            max = picker.max,
+            min = picker.min,
+            step = picker.step,
+            value = +getText($);
+        // Take from the current text
+        if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
+            setAria(mask, TOKEN_INVALID, true);
+        }
+        selectTo($);
     }
 
     function onInputTextInput(e) {
@@ -896,6 +927,7 @@
             self = picker.self,
             v,
             value = +(v = getText($));
+        // Take from the current text
         if (!_active) {
             return offEventDefault(e);
         }
@@ -943,9 +975,7 @@
             error = time.error;
         if (isInteger(error) && error > 0) {
             setAria(mask, TOKEN_INVALID, true);
-            delay(function () {
-                return letAria(mask, TOKEN_INVALID);
-            })[0](error);
+            delayErrorRemove(1000, mask);
         }
     }
 
@@ -1291,8 +1321,12 @@
             setChildLast(maskFlex, stepFlex);
             setChildLast(stepFlex, stepUp);
             setChildLast(stepFlex, stepDown);
+            onEvent(EVENT_BLUR, stepDown, onBlurStepDown);
+            onEvent(EVENT_BLUR, stepUp, onBlurStepUp);
             onEvent(EVENT_BLUR, textInput, onBlurTextInput);
             onEvent(EVENT_CUT, textInput, onCutTextInput);
+            onEvent(EVENT_FOCUS, stepDown, onFocusStepDown);
+            onEvent(EVENT_FOCUS, stepUp, onFocusStepUp);
             onEvent(EVENT_FOCUS, textInput, onFocusTextInput);
             onEvent(EVENT_INPUT, textInput, onInputTextInput);
             onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
@@ -1390,8 +1424,11 @@
                 mask = $.mask,
                 self = $.self,
                 state = $.state,
+                _step = _mask._step,
                 input = _mask.input;
             _mask.value;
+            var down = _step.down,
+                up = _step.up;
             getParentForm(self);
             $._active = false;
             $._value = null;
@@ -1399,10 +1436,14 @@
             //     offEvent(EVENT_RESET, form, onResetForm);
             //     offEvent(EVENT_SUBMIT, form, onSubmitForm);
             // }
+            offEvent(EVENT_BLUR, down, onBlurStepDown);
             offEvent(EVENT_BLUR, input, onBlurTextInput);
+            offEvent(EVENT_BLUR, up, onBlurStepUp);
             offEvent(EVENT_CUT, input, onCutTextInput);
+            offEvent(EVENT_FOCUS, down, onFocusStepDown);
             offEvent(EVENT_FOCUS, input, onFocusTextInput);
             offEvent(EVENT_FOCUS, self, onFocusSelf);
+            offEvent(EVENT_FOCUS, up, onFocusStepUp);
             offEvent(EVENT_INVALID, self, onInvalidSelf);
             offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
             offEvent(EVENT_PASTE, input, onPasteTextInput);

@@ -11,6 +11,8 @@ import {isArray, isBoolean, isFloat, isFunction, isInstance, isInteger, isNumber
 import {offEvent, offEventDefault, offEventPropagation, onEvent} from '@taufik-nurrohman/event';
 import {toCaseLower, toCount, toMapCount, toSetCount, toValue} from '@taufik-nurrohman/to';
 
+const [delayErrorRemove, delayErrorRemoveReset] = delay(mask => letAria(mask, TOKEN_INVALID));
+
 const FILTER_COMMIT_TIME = 10;
 const SEARCH_CLEAR_TIME = 500;
 
@@ -122,18 +124,26 @@ function focusTo(node) {
     return node.focus(), node;
 }
 
-function onBlurTextInput() {
+function onBlurStepDown() {
     let $ = this,
         picker = getReference($),
         {mask, state} = picker,
-        {strict, time} = state,
+        {time} = state,
         {error} = time;
-    // TODO: Validate value on blur
     if (isInteger(error) && error > 0) {
-        delay(() => letAria(mask, TOKEN_INVALID))[0](error);
+        delayErrorRemove(error, mask);
     } else {
         letAria(mask, TOKEN_INVALID);
     }
+}
+
+function onBlurStepUp() {
+    onBlurStepDown.call(this);
+}
+
+function onBlurTextInput() {
+    // TODO: Validate value on blur
+    onBlurStepDown.call(this);
 }
 
 function onCutTextInput(e) {
@@ -147,8 +157,24 @@ function onFocusSelf() {
     getReference(this).focus();
 }
 
+function onFocusStepDown() {
+    delayErrorRemoveReset();
+}
+
+function onFocusStepUp() {
+    onFocusStepDown();
+}
+
 function onFocusTextInput() {
-    selectTo(this);
+    delayErrorRemoveReset();
+    let $ = this,
+        picker = getReference($),
+        {mask, max, min, step} = picker,
+        value = +getText($); // Take from the current text
+    if (!isNumber(value) || 0 !== (value % step) || value > max || value < min) {
+        setAria(mask, TOKEN_INVALID, true);
+    }
+    selectTo($);
 }
 
 function onInputTextInput(e) {
@@ -156,7 +182,7 @@ function onInputTextInput(e) {
         {inputType} = e,
         picker = getReference($),
         {_active, self} = picker, v,
-        value = +(v = getText($));
+        value = +(v = getText($)); // Take from the current text
     if (!_active) {
         return offEventDefault(e);
     }
@@ -198,7 +224,7 @@ function onInvalidSelf(e) {
         {error} = time;
     if (isInteger(error) && error > 0) {
         setAria(mask, TOKEN_INVALID, true);
-        delay(() => letAria(mask, TOKEN_INVALID))[0](error);
+        delayErrorRemove(1000, mask);
     }
 }
 
@@ -522,8 +548,12 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         setChildLast(maskFlex, stepFlex);
         setChildLast(stepFlex, stepUp);
         setChildLast(stepFlex, stepDown);
+        onEvent(EVENT_BLUR, stepDown, onBlurStepDown);
+        onEvent(EVENT_BLUR, stepUp, onBlurStepUp);
         onEvent(EVENT_BLUR, textInput, onBlurTextInput);
         onEvent(EVENT_CUT, textInput, onCutTextInput);
+        onEvent(EVENT_FOCUS, stepDown, onFocusStepDown);
+        onEvent(EVENT_FOCUS, stepUp, onFocusStepUp);
         onEvent(EVENT_FOCUS, textInput, onFocusTextInput);
         onEvent(EVENT_INPUT, textInput, onInputTextInput);
         onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
@@ -619,7 +649,8 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
     detach: function () {
         let $ = this,
             {_mask, mask, self, state} = $,
-            {input, value} = _mask;
+            {_step, input, value} = _mask,
+            {down, up} = _step;
         const form = getParentForm(self);
         $._active = false;
         $._value = null;
@@ -627,10 +658,14 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         //     offEvent(EVENT_RESET, form, onResetForm);
         //     offEvent(EVENT_SUBMIT, form, onSubmitForm);
         // }
+        offEvent(EVENT_BLUR, down, onBlurStepDown);
         offEvent(EVENT_BLUR, input, onBlurTextInput);
+        offEvent(EVENT_BLUR, up, onBlurStepUp);
         offEvent(EVENT_CUT, input, onCutTextInput);
+        offEvent(EVENT_FOCUS, down, onFocusStepDown);
         offEvent(EVENT_FOCUS, input, onFocusTextInput);
         offEvent(EVENT_FOCUS, self, onFocusSelf);
+        offEvent(EVENT_FOCUS, up, onFocusStepUp);
         offEvent(EVENT_INVALID, self, onInvalidSelf);
         offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
         offEvent(EVENT_PASTE, input, onPasteTextInput);
