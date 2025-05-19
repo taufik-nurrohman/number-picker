@@ -83,14 +83,40 @@ const TOKEN_VISIBILITY = 'visibility';
 const name = 'NumberPicker';
 
 const [repeatStart, repeatStop] = repeat(function (picker, step) {
-    let $ = this,
-        {max, min, value} = picker;
-    value = (+(value ?? 0)) + step;
-    if (value > max || value < min) {
-        return repeatStop(), focusTo($);
-    }
-    (picker.value = value), focusTo($);
+    cycleValue.call(this, picker, step, repeatStop);
 });
+
+function cycleValue(picker, step, onStop, onStep) {
+    let $ = this,
+        {_active, _fix} = picker;
+    if (_fix) {
+        return focusTo(picker);
+    }
+    if (!_active) {
+        return;
+    }
+    let {mask, max, min, state, value} = picker,
+        {strict} = state;
+    value = (+(value ?? 0)) + step;
+    if (!isNumber(value)) {
+        if (strict) {
+            setAria(mask, TOKEN_INVALID, true);
+            return focusTo($), selectTo($);
+        }
+        picker.value = value = step < 0 ? min : max;
+        setAria(mask, 'valuenow', value);
+    }
+    if (value > max || value < min) {
+        if (strict) {
+            return focusTo($), selectTo($), (onStop && onStop(picker));
+        }
+        setAria(mask, TOKEN_INVALID);
+    } else {
+        letAria(mask, TOKEN_INVALID);
+    }
+    setAria(mask, 'valuenow', value);
+    (picker.value = value), focusTo($), selectTo($), (onStep && onStep(picker));
+}
 
 function focusTo(node) {
     return node.focus(), node;
@@ -100,10 +126,11 @@ function onBlurTextInput() {
     let $ = this,
         picker = getReference($),
         {mask, state} = picker,
-        {error} = state;
+        {time} = state,
+        {error} = time;
     // TODO: Validate value on blur
     if (isNumber(error) && error > 0) {
-        delay(() => letAria(mask, TOKEN_INVALID))(error);
+        delay(() => letAria(mask, TOKEN_INVALID))[0](error);
     } else {
         letAria(mask, TOKEN_INVALID);
     }
@@ -113,6 +140,11 @@ function onCutTextInput(e) {
     let $ = this,
         picker = getReference($);
     delay(() => picker.value = getText($))[0](1);
+}
+
+// Focus on the “visually hidden” self will move its focus to the mask, maintains the natural flow of the tab(s)!
+function onFocusSelf() {
+    getReference(this).focus();
 }
 
 function onFocusTextInput() {
@@ -128,30 +160,32 @@ function onInputTextInput(e) {
     if (!_active) {
         return offEventDefault(e);
     }
-    let {_mask, mask, max, min, step} = picker,
-        {hint} = _mask;
+    let {_mask, mask, max, min, state, step} = picker,
+        {hint} = _mask,
+        {strict} = state;
     if ('deleteContent' === inputType.slice(0, 13) && 0 === value) {
         letStyle(hint, TOKEN_VISIBILITY);
     } else if ('insertText' === inputType) {
         setStyle(hint, TOKEN_VISIBILITY, 'hidden');
     }
-    if (!isNumber(value)) {
-        picker.fire('not.number', [v]);
-        return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
+    if (!isNumber(value) || 0 !== (value % step) || value > max || value < min) {
+        setAria(mask, TOKEN_INVALID, true);
+        if (!isNumber(value)) {
+            picker.fire('not.number', [v]);
+        } else if (0 !== (value % step)) {
+            picker.fire('not.step', [v]);
+        } else if (value > max) {
+            picker.fire('max.number', [value, max]);
+        } else if (value < min) {
+            picker.fire('min.number', [value, min]);
+        } else {
+            letAria(mask, TOKEN_INVALID);
+            picker.fire('is.number', [value]);
+        }
+        if (strict) {
+            return;
+        }
     }
-    if (0 !== (value % step)) {
-        picker.fire('not.value', [v]);
-        return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
-    }
-    if (value > max) {
-        picker.fire('max.number', [value, max]);
-        return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
-    }
-    if (value < min) {
-        picker.fire('min.number', [value, min]);
-        return setAria(mask, TOKEN_INVALID, true), offEventDefault(e);
-    }
-    letAria(mask, TOKEN_INVALID), picker.fire('is.number', [value]);
     setValue(self, value += ""), picker.fire('change', ["" !== value ? value : null]);
 }
 
@@ -167,10 +201,19 @@ function onInvalidSelf(e) {
 function onKeyDownTextInput(e) {
     let $ = this, exit,
         key = e.key,
+        keyIsAlt = e.altKey,
+        keyIsCtrl = e.ctrlKey,
+        keyIsShift = e.shiftKey,
         picker = getReference($),
-        {_mask, self, state} = picker,
-        {hint} = _mask;
-    exit && (offEventDefault(e), offEventPropagation(e));
+        {step} = picker;
+    if (keyIsAlt || keyIsCtrl || keyIsShift) {} else if (KEY_ARROW_DOWN === key || KEY_PAGE_DOWN === key) {
+        exit = true;
+        cycleValue.call($, picker, -step);
+    } else if (KEY_ARROW_UP === key || KEY_PAGE_UP === key) {
+        exit = true;
+        cycleValue.call($, picker, step);
+    }
+    exit && offEventDefault(e);
 }
 
 function onPasteTextInput(e) {
@@ -196,7 +239,7 @@ function onPointerDownMask(e) {
         {target} = e,
         targetDown = target,
         targetUp = target;
-    if (down === targetDown) {
+    if (down === targetDown || up === targetUp) {
         return;
     }
     while (mask !== targetDown) {
@@ -204,9 +247,6 @@ function onPointerDownMask(e) {
         if (down === targetDown) {
             return;
         }
-    }
-    if (up === targetUp) {
-        return;
     }
     while (mask !== targetUp) {
         targetUp = getParent(targetUp);
@@ -221,42 +261,24 @@ function onPointerDownStepDown(e) {
     offEventDefault(e);
     let $ = this,
         picker = getReference($),
-        {_active, _fix} = picker;
-    if (!_active) {
-        return;
-    }
-    if (_fix) {
-        return focusTo(picker);
-    }
-    let {_mask, max, min, step, value} = picker;
-    if ((value = (+(value ?? 0)) - step) < min) {
-        return (picker.value = min), focusTo($);
-    }
-    (picker.value = value), focusTo($);
-    if (EVENT_WHEEL !== e.type) {
-        repeatStart.call($, 500, 100, picker, -step);
-    }
+        {max, min, state, step} = picker,
+        {strict} = state;
+    cycleValue.call($, picker, -step, strict && function () {
+        (picker.value = min), focusTo($);
+    });
+    repeatStart.call($, 500, 100, picker, -step);
 }
 
 function onPointerDownStepUp(e) {
     offEventDefault(e);
     let $ = this,
         picker = getReference($),
-        {_active, _fix} = picker;
-    if (!_active) {
-        return;
-    }
-    if (_fix) {
-        return focusTo(picker);
-    }
-    let {_mask, max, min, step, value} = picker;
-    if ((value = (+(value ?? 0)) + step) > max) {
-        return (picker.value = max), focusTo($);
-    }
-    (picker.value = value), focusTo($);
-    if (EVENT_WHEEL !== e.type) {
-        repeatStart.call($, 500, 100, picker, step);
-    }
+        {max, min, state, step} = picker,
+        {strict} = state;
+    cycleValue.call($, picker, step, strict && function () {
+        (picker.value = max), focusTo($);
+    });
+    repeatStart.call($, 500, 100, picker, step);
 }
 
 function onPointerUpRoot() {
@@ -267,16 +289,21 @@ function onWheelMask(e) {
     offEventDefault(e);
     let $ = this,
         picker = getReference($),
-        {_mask} = picker,
+        {_mask, max, min, state, step} = picker,
         {_step} = _mask,
         {down, up} = _step,
+        {strict} = state,
         {deltaY} = e;
     // Wheel up
     if (deltaY < 0) {
-        onPointerDownStepUp.call(up, e);
+        cycleValue.call(up, picker, step, strict && function () {
+            (picker.value = max), focusTo(up);
+        });
     // Wheel down
     } else {
-        onPointerDownStepDown.call(down, e);
+        cycleValue.call(down, picker, -step, strict && function () {
+            (picker.value = min), focusTo(down);
+        });
     }
 }
 
@@ -304,6 +331,7 @@ NumberPicker.state = {
     'min': null,
     'n': 'number-picker',
     'step': null,
+    'strict': false,
     'time': {
         'error': 1000
     },
@@ -376,15 +404,27 @@ setObjectAttributes(NumberPicker, {
                 return $;
             }
             value = +(v = (value ?? "") + "");
-            let {_mask, mask, max, min, self} = $,
-                {hint, input} = _mask;
+            let {_mask, mask, max, min, self, state, step} = $,
+                {hint, input} = _mask,
+                {strict} = state;
             setText(input, v);
             "" !== v ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
-            if (!isNumber(value) || value < min || value > max) {
-                return setAria(mask, TOKEN_INVALID, true), $;
+            if (!isNumber(value) || 0 !== (value % step) || value > max || value < min) {
+                setAria(mask, TOKEN_INVALID, true);
+                if (!isNumber(value)) {
+                    $.fire('not.number', [v]);
+                } else if (0 !== (value % step)) {
+                    $.fire('not.step', [v]);
+                } else if (value > max) {
+                    $.fire('max.number', [value, max]);
+                } else if (value < min) {
+                    $.fire('min.number', [value, min]);
+                }
+                if (strict) {
+                    return $;
+                }
             }
-            setValue(self, v);
-            return $.fire('change', ["" !== v ? v : null]);
+            return setValue(self, v), $.fire('change', ["" !== v ? v : null]);
         }
     },
     vital: {
@@ -463,6 +503,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
             },
             'autocapitalize': 'off',
             'contenteditable': isDisabledSelf || isReadOnlySelf ? false : "",
+            'inputmode': isInteger(step) ? 'numeric': 'decimal',
             'role': 'textbox',
             'spellcheck': TOKEN_FALSE,
             'tabindex': isReadOnlySelf ? 0 : false
@@ -502,7 +543,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         //     setID(form);
         //     setReference(form, $);
         // }
-        // onEvent(EVENT_FOCUS, self, onFocusSelf);
+        onEvent(EVENT_FOCUS, self, onFocusSelf);
         // onEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
         onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
         // onEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
@@ -583,7 +624,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         // }
         offEvent(EVENT_BLUR, input, onBlurTextInput);
         offEvent(EVENT_FOCUS, input, onFocusTextInput);
-        // offEvent(EVENT_FOCUS, self, onFocusSelf);
+        offEvent(EVENT_FOCUS, self, onFocusSelf);
         offEvent(EVENT_CUT, input, onCutTextInput);
         offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
         offEvent(EVENT_PASTE, input, onPasteTextInput);
