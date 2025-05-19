@@ -250,7 +250,7 @@
     };
     var forEachArray = function forEachArray(array, at) {
         for (var i = 0, j = toCount(array), v; i < j; ++i) {
-            v = at(array[i], i);
+            v = at.call(array, array[i], i);
             if (-1 === v) {
                 array.splice(i, 1);
                 continue;
@@ -267,7 +267,7 @@
     var forEachObject = function forEachObject(object, at) {
         var v;
         for (var k in object) {
-            v = at(object[k], k);
+            v = at.call(object, object[k], k);
             if (-1 === v) {
                 delete object[k];
                 continue;
@@ -858,11 +858,12 @@
         var $ = this,
             picker = getReference($),
             mask = picker.mask,
-            state = picker.state,
-            time = state.time,
+            state = picker.state;
+        state.strict;
+        var time = state.time,
             error = time.error;
         // TODO: Validate value on blur
-        if (isNumber(error) && error > 0) {
+        if (isInteger(error) && error > 0) {
             delay(function () {
                 return letAria(mask, TOKEN_INVALID);
             })[0](error);
@@ -930,6 +931,22 @@
             }
         }
         setValue(self, value += ""), picker.fire('change', ["" !== value ? value : null]);
+    }
+
+    function onInvalidSelf(e) {
+        e && offEventDefault(e);
+        var $ = this,
+            picker = getReference($),
+            mask = picker.mask,
+            state = picker.state,
+            time = state.time,
+            error = time.error;
+        if (isInteger(error) && error > 0) {
+            setAria(mask, TOKEN_INVALID, true);
+            delay(function () {
+                return letAria(mask, TOKEN_INVALID);
+            })[0](error);
+        }
     }
 
     function onKeyDownTextInput(e) {
@@ -1010,7 +1027,7 @@
         cycleValue.call($, picker, -step, strict && function () {
             picker.value = min, focusTo($);
         });
-        repeatStart.call($, 500, 100, picker, -step);
+        repeatStart.call($, 500, 50, picker, -step);
     }
 
     function onPointerDownStepUp(e) {
@@ -1025,7 +1042,7 @@
         cycleValue.call($, picker, step, strict && function () {
             picker.value = max, focusTo($);
         });
-        repeatStart.call($, 500, 100, picker, step);
+        repeatStart.call($, 500, 50, picker, step);
     }
 
     function onPointerUpRoot() {
@@ -1300,6 +1317,7 @@
             //     setReference(form, $);
             // }
             onEvent(EVENT_FOCUS, self, onFocusSelf);
+            onEvent(EVENT_INVALID, self, onInvalidSelf);
             // onEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
             onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
             // onEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
@@ -1382,9 +1400,10 @@
             //     offEvent(EVENT_SUBMIT, form, onSubmitForm);
             // }
             offEvent(EVENT_BLUR, input, onBlurTextInput);
+            offEvent(EVENT_CUT, input, onCutTextInput);
             offEvent(EVENT_FOCUS, input, onFocusTextInput);
             offEvent(EVENT_FOCUS, self, onFocusSelf);
-            offEvent(EVENT_CUT, input, onCutTextInput);
+            offEvent(EVENT_INVALID, self, onInvalidSelf);
             offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
             offEvent(EVENT_PASTE, input, onPasteTextInput);
             // offEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);

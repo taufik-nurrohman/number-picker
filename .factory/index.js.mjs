@@ -126,10 +126,10 @@ function onBlurTextInput() {
     let $ = this,
         picker = getReference($),
         {mask, state} = picker,
-        {time} = state,
+        {strict, time} = state,
         {error} = time;
     // TODO: Validate value on blur
-    if (isNumber(error) && error > 0) {
+    if (isInteger(error) && error > 0) {
         delay(() => letAria(mask, TOKEN_INVALID))[0](error);
     } else {
         letAria(mask, TOKEN_INVALID);
@@ -193,9 +193,13 @@ function onInvalidSelf(e) {
     e && offEventDefault(e);
     let $ = this,
         picker = getReference($),
-        {mask} = picker;
-    setAria(mask, TOKEN_INVALID, true);
-    delay(() => letAria(mask, TOKEN_INVALID))[0](1000);
+        {mask, state} = picker,
+        {time} = state,
+        {error} = time;
+    if (isInteger(error) && error > 0) {
+        setAria(mask, TOKEN_INVALID, true);
+        delay(() => letAria(mask, TOKEN_INVALID))[0](error);
+    }
 }
 
 function onKeyDownTextInput(e) {
@@ -266,7 +270,7 @@ function onPointerDownStepDown(e) {
     cycleValue.call($, picker, -step, strict && function () {
         (picker.value = min), focusTo($);
     });
-    repeatStart.call($, 500, 100, picker, -step);
+    repeatStart.call($, 500, 50, picker, -step);
 }
 
 function onPointerDownStepUp(e) {
@@ -278,7 +282,7 @@ function onPointerDownStepUp(e) {
     cycleValue.call($, picker, step, strict && function () {
         (picker.value = max), focusTo($);
     });
-    repeatStart.call($, 500, 100, picker, step);
+    repeatStart.call($, 500, 50, picker, step);
 }
 
 function onPointerUpRoot() {
