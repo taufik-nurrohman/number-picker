@@ -978,7 +978,8 @@
 
     function onInvalidSelf(e) {
         e && offEventDefault(e);
-        onBlurTextInput.call(this);
+        var $ = this;
+        onBlurTextInput.call($), setError(getReference($));
     }
 
     function onKeyDownTextInput(e) {
