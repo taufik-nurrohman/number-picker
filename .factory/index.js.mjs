@@ -1,7 +1,7 @@
 import {/* focusTo, */insertAtSelection, selectTo, selectToNone} from '@taufik-nurrohman/selection';
-import {R, W, getAria, getAttributes, getChildFirst, getChildLast, getChildren, getDatum, getElement, getElementIndex, getHTML, getID, getName, getNext, getParent, getParentForm, getPrev, getRole, getState, getStyle, getText, getValue, hasState, isDisabled, isReadOnly, isRequired, letAria, letAttribute, letClass, letDatum, letElement, letID, letStyle, setAria, setAttribute, setChildLast, setClass, setDatum, setElement, setHTML, setID, setNext, setStyle, setStyles, setText, setValue} from '@taufik-nurrohman/document';
+import {R, getID, getParent, getParentForm, getText, getValue, isDisabled, isReadOnly, isRequired, letAria, letAttribute, letClass, letDatum, letElement, letID, letStyle, setAria, setAttribute, setChildLast, setClass, setDatum, setElement, setHTML, setID, setNext, setStyle, setStyles, setText, setValue} from '@taufik-nurrohman/document';
 import {delay, repeat} from '@taufik-nurrohman/tick';
-import {forEachArray, forEachMap, forEachObject, forEachSet, getPrototype, getReference, getValueInMap, hasKeyInMap, letReference, letValueInMap, onAnimationsEnd, setObjectAttributes, setObjectMethods, setReference, setValueInMap, toValuesFromMap, toValueFirstFromMap} from '@taufik-nurrohman/f';
+import {forEachArray, getPrototype, getReference, getValueInMap, hasKeyInMap, letReference, letValueInMap, onAnimationsEnd, setObjectAttributes, setObjectMethods, setReference, setValueInMap, toValuesFromMap, toValueFirstFromMap} from '@taufik-nurrohman/f';
 import {fromStates, fromValue} from '@taufik-nurrohman/from';
 import {getRect} from '@taufik-nurrohman/rect';
 import {getScroll, setScroll} from '@taufik-nurrohman/rect';
@@ -10,11 +10,6 @@ import {hook} from '@taufik-nurrohman/hook';
 import {isArray, isBoolean, isFloat, isFunction, isInstance, isInteger, isNumber, isObject, isSet, isString} from '@taufik-nurrohman/is';
 import {offEvent, offEventDefault, offEventPropagation, onEvent} from '@taufik-nurrohman/event';
 import {toCaseLower, toCount, toMapCount, toSetCount, toValue} from '@taufik-nurrohman/to';
-
-const [delayErrorRemove, delayErrorRemoveReset] = delay(mask => letAria(mask, TOKEN_INVALID));
-
-const FILTER_COMMIT_TIME = 10;
-const SEARCH_CLEAR_TIME = 500;
 
 const EVENT_DOWN = 'down';
 const EVENT_MOVE = 'move';
@@ -82,6 +77,26 @@ const TOKEN_VALUE = 'value';
 const TOKEN_VALUES = TOKEN_VALUE + 's';
 const TOKEN_VISIBILITY = 'visibility';
 
+const [letError, letErrorAbort] = delay(function (picker) {
+    letAria(picker.mask, TOKEN_INVALID);
+});
+
+const setError = function (picker) {
+    setAria(picker.mask, TOKEN_INVALID, true);
+};
+
+const [setValuePicker] = delay(function (picker) {
+    let {_mask} = picker,
+        {input} = _mask;
+    (picker.value = getText(input)) && selectTo(input);
+});
+
+const [toggleHint] = delay(function (picker) {
+    let {_mask} = picker,
+        {hint, input} = _mask;
+    getText(input, 0) ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
+});
+
 const name = 'NumberPicker';
 
 const [repeatStart, repeatStop] = repeat(function (picker, step) {
@@ -102,8 +117,7 @@ function cycleValue(picker, step, onStop, onStep) {
     value = (+(value ?? 0)) + step;
     if (!isNumber(value)) {
         if (strict) {
-            setAria(mask, TOKEN_INVALID, true);
-            return focusTo($), selectTo($);
+            return setError(picker), focusTo($), selectTo($);
         }
         picker.value = value = step < 0 ? min : max;
         setAria(mask, 'valuenow', value);
@@ -112,9 +126,9 @@ function cycleValue(picker, step, onStop, onStep) {
         if (strict) {
             return focusTo($), selectTo($), (onStop && onStop(picker));
         }
-        setAria(mask, TOKEN_INVALID);
+        setError(picker);
     } else {
-        letAria(mask, TOKEN_INVALID);
+        letError(0, picker);
     }
     setAria(mask, 'valuenow', value);
     (picker.value = value), focusTo($), selectTo($), (onStep && onStep(picker));
@@ -127,14 +141,10 @@ function focusTo(node) {
 function onBlurStepDown() {
     let $ = this,
         picker = getReference($),
-        {mask, state} = picker,
+        {state} = picker,
         {time} = state,
         {error} = time;
-    if (isInteger(error) && error > 0) {
-        delayErrorRemove(error, mask);
-    } else {
-        letAria(mask, TOKEN_INVALID);
-    }
+    letError(isInteger(error) && error > 0 ? error : 0, picker);
 }
 
 function onBlurStepUp() {
@@ -148,17 +158,18 @@ function onBlurTextInput() {
 
 function onCutTextInput(e) {
     let $ = this,
-        picker = getReference($);
-    delay(() => picker.value = getText($))[0](1);
+        picker = getReference($),
+        {self} = picker;
+    toggleHint(1, picker), delay(() => setValue(self, getText($)))[0](1);
 }
 
 // Focus on the “visually hidden” self will move its focus to the mask, maintains the natural flow of the tab(s)!
 function onFocusSelf() {
-    getReference(this).focus();
+    focusTo(getReference(this));
 }
 
 function onFocusStepDown() {
-    delayErrorRemoveReset();
+    letErrorAbort();
 }
 
 function onFocusStepUp() {
@@ -166,13 +177,13 @@ function onFocusStepUp() {
 }
 
 function onFocusTextInput() {
-    delayErrorRemoveReset();
+    letErrorAbort();
     let $ = this,
         picker = getReference($),
-        {mask, max, min, step} = picker,
+        {max, min, step} = picker,
         value = +getText($); // Take from the current text
     if (!isNumber(value) || 0 !== (value % step) || value > max || value < min) {
-        setAria(mask, TOKEN_INVALID, true);
+        setError(picker);
     }
     selectTo($);
 }
@@ -186,7 +197,7 @@ function onInputTextInput(e) {
     if (!_active) {
         return offEventDefault(e);
     }
-    let {_mask, mask, max, min, state, step} = picker,
+    let {_mask, max, min, state, step} = picker,
         {hint} = _mask,
         {strict} = state;
     if ('deleteContent' === inputType.slice(0, 13) && 0 === value) {
@@ -195,7 +206,7 @@ function onInputTextInput(e) {
         setStyle(hint, TOKEN_VISIBILITY, 'hidden');
     }
     if (!isNumber(value) || 0 !== (value % step) || value > max || value < min) {
-        setAria(mask, TOKEN_INVALID, true);
+        setError(picker);
         if (!isNumber(value)) {
             picker.fire('not.number', [v]);
         } else if (0 !== (value % step)) {
@@ -209,7 +220,7 @@ function onInputTextInput(e) {
             return;
         }
     } else {
-        letAria(mask, TOKEN_INVALID);
+        letError(0, picker);
         picker.fire('is.number', [value]);
     }
     setValue(self, value += ""), picker.fire('change', ["" !== value ? value : null]);
@@ -217,15 +228,7 @@ function onInputTextInput(e) {
 
 function onInvalidSelf(e) {
     e && offEventDefault(e);
-    let $ = this,
-        picker = getReference($),
-        {mask, state} = picker,
-        {time} = state,
-        {error} = time;
-    if (isInteger(error) && error > 0) {
-        setAria(mask, TOKEN_INVALID, true);
-        delayErrorRemove(1000, mask);
-    }
+    onBlurTextInput.call(this);
 }
 
 function onKeyDownTextInput(e) {
@@ -250,8 +253,7 @@ function onPasteTextInput(e) {
     offEventDefault(e);
     let $ = this,
         picker = getReference($);
-    insertAtSelection($, e.clipboardData.getData('text/plain'));
-    delay(() => (picker.value = getText($), selectTo($)))[0](1);
+    setValuePicker(1, picker), insertAtSelection($, e.clipboardData.getData('text/plain'));
 }
 
 function onPointerDownMask(e) {
@@ -262,10 +264,9 @@ function onPointerDownMask(e) {
     if (!_active) {
         return;
     }
-    let {_mask, mask, state} = picker,
+    let {_mask, mask} = picker,
         {_step} = _mask,
         {down, up} = _step,
-        {n} = state,
         {target} = e,
         targetDown = target,
         targetUp = target;
@@ -291,7 +292,7 @@ function onPointerDownStepDown(e) {
     offEventDefault(e);
     let $ = this,
         picker = getReference($),
-        {max, min, state, step} = picker,
+        {min, state, step} = picker,
         {strict} = state;
     cycleValue.call($, picker, -step, strict && function () {
         (picker.value = min), focusTo($);
@@ -303,7 +304,7 @@ function onPointerDownStepUp(e) {
     offEventDefault(e);
     let $ = this,
         picker = getReference($),
-        {max, min, state, step} = picker,
+        {max, state, step} = picker,
         {strict} = state;
     cycleValue.call($, picker, step, strict && function () {
         (picker.value = max), focusTo($);
@@ -434,13 +435,13 @@ setObjectAttributes(NumberPicker, {
                 return $;
             }
             value = +(v = (value ?? "") + "");
-            let {_mask, mask, max, min, self, state, step} = $,
+            let {_mask, max, min, self, state, step} = $,
                 {hint, input} = _mask,
                 {strict} = state;
             setText(input, v);
             "" !== v ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
             if (!isNumber(value) || 0 !== (value % step) || value > max || value < min) {
-                setAria(mask, TOKEN_INVALID, true);
+                setError($);
                 if (!isNumber(value)) {
                     $.fire('not.number', [v]);
                 } else if (0 !== (value % step)) {
@@ -454,7 +455,7 @@ setObjectAttributes(NumberPicker, {
                     return $;
                 }
             } else {
-                letAria(mask, TOKEN_INVALID);
+                letError(0, $);
                 $.fire('is.number', [value]);
             }
             return setValue(self, v), $.fire('change', ["" !== v ? v : null]);

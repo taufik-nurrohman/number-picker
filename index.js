@@ -70,7 +70,7 @@
     function _maybeArrayLike(r, a, e) {
         if (a && !Array.isArray(a) && "number" == typeof a.length) {
             var y = a.length;
-            return _arrayLikeToArray(a, e < y ? e : y);
+            return _arrayLikeToArray(a, void 0 !== e && e < y ? e : y);
         }
         return r(a, e);
     }
@@ -775,12 +775,6 @@
         }
         node.addEventListener(name, then, options);
     };
-    var _delay = delay(function (mask) {
-            return letAria(mask, TOKEN_INVALID);
-        }),
-        _delay2 = _maybeArrayLike(_slicedToArray, _delay, 2),
-        delayErrorRemove = _delay2[0],
-        delayErrorRemoveReset = _delay2[1];
     var EVENT_DOWN = 'down';
     var EVENT_UP = 'up';
     var EVENT_BLUR = 'blur';
@@ -811,6 +805,30 @@
     var TOKEN_TAB_INDEX = 'tabIndex';
     var TOKEN_TRUE = 'true';
     var TOKEN_VISIBILITY = 'visibility';
+    var _delay = delay(function (picker) {
+            letAria(picker.mask, TOKEN_INVALID);
+        }),
+        _delay2 = _maybeArrayLike(_slicedToArray, _delay, 2),
+        letError = _delay2[0],
+        letErrorAbort = _delay2[1];
+    var setError = function setError(picker) {
+        setAria(picker.mask, TOKEN_INVALID, true);
+    };
+    var _delay3 = delay(function (picker) {
+            var _mask = picker._mask,
+                input = _mask.input;
+            (picker.value = getText(input)) && selectTo(input);
+        }),
+        _delay4 = _maybeArrayLike(_slicedToArray, _delay3, 1),
+        setValuePicker = _delay4[0];
+    var _delay5 = delay(function (picker) {
+            var _mask = picker._mask,
+                hint = _mask.hint,
+                input = _mask.input;
+            getText(input, 0) ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
+        }),
+        _delay6 = _maybeArrayLike(_slicedToArray, _delay5, 1),
+        toggleHint = _delay6[0];
     var name = 'NumberPicker';
     var _repeat = repeat(function (picker, step) {
             cycleValue.call(this, picker, step, repeatStop);
@@ -838,8 +856,7 @@
         value = +(value != null ? value : 0) + step;
         if (!isNumber(value)) {
             if (strict) {
-                setAria(mask, TOKEN_INVALID, true);
-                return focusTo($), selectTo($);
+                return setError(picker), focusTo($), selectTo($);
             }
             picker.value = value = step < 0 ? min : max;
             setAria(mask, 'valuenow', value);
@@ -848,9 +865,9 @@
             if (strict) {
                 return focusTo($), selectTo($), onStop && onStop(picker);
             }
-            setAria(mask, TOKEN_INVALID);
+            setError(picker);
         } else {
-            letAria(mask, TOKEN_INVALID);
+            letError(0, picker);
         }
         setAria(mask, 'valuenow', value);
         picker.value = value, focusTo($), selectTo($), onStep && onStep(picker);
@@ -863,15 +880,10 @@
     function onBlurStepDown() {
         var $ = this,
             picker = getReference($),
-            mask = picker.mask,
             state = picker.state,
             time = state.time,
             error = time.error;
-        if (isInteger(error) && error > 0) {
-            delayErrorRemove(error, mask);
-        } else {
-            letAria(mask, TOKEN_INVALID);
-        }
+        letError(isInteger(error) && error > 0 ? error : 0, picker);
     }
 
     function onBlurStepUp() {
@@ -885,18 +897,19 @@
 
     function onCutTextInput(e) {
         var $ = this,
-            picker = getReference($);
-        delay(function () {
-            return picker.value = getText($);
+            picker = getReference($),
+            self = picker.self;
+        toggleHint(1, picker), delay(function () {
+            return setValue(self, getText($));
         })[0](1);
     }
     // Focus on the “visually hidden” self will move its focus to the mask, maintains the natural flow of the tab(s)!
     function onFocusSelf() {
-        getReference(this).focus();
+        focusTo(getReference(this));
     }
 
     function onFocusStepDown() {
-        delayErrorRemoveReset();
+        letErrorAbort();
     }
 
     function onFocusStepUp() {
@@ -904,17 +917,16 @@
     }
 
     function onFocusTextInput() {
-        delayErrorRemoveReset();
+        letErrorAbort();
         var $ = this,
             picker = getReference($),
-            mask = picker.mask,
             max = picker.max,
             min = picker.min,
             step = picker.step,
             value = +getText($);
         // Take from the current text
         if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
-            setAria(mask, TOKEN_INVALID, true);
+            setError(picker);
         }
         selectTo($);
     }
@@ -932,7 +944,6 @@
             return offEventDefault(e);
         }
         var _mask = picker._mask,
-            mask = picker.mask,
             max = picker.max,
             min = picker.min,
             state = picker.state,
@@ -945,7 +956,7 @@
             setStyle(hint, TOKEN_VISIBILITY, 'hidden');
         }
         if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
-            setAria(mask, TOKEN_INVALID, true);
+            setError(picker);
             if (!isNumber(value)) {
                 picker.fire('not.number', [v]);
             } else if (0 !== value % step) {
@@ -959,7 +970,7 @@
                 return;
             }
         } else {
-            letAria(mask, TOKEN_INVALID);
+            letError(0, picker);
             picker.fire('is.number', [value]);
         }
         setValue(self, value += ""), picker.fire('change', ["" !== value ? value : null]);
@@ -967,16 +978,7 @@
 
     function onInvalidSelf(e) {
         e && offEventDefault(e);
-        var $ = this,
-            picker = getReference($),
-            mask = picker.mask,
-            state = picker.state,
-            time = state.time,
-            error = time.error;
-        if (isInteger(error) && error > 0) {
-            setAria(mask, TOKEN_INVALID, true);
-            delayErrorRemove(1000, mask);
-        }
+        onBlurTextInput.call(this);
     }
 
     function onKeyDownTextInput(e) {
@@ -1003,10 +1005,7 @@
         offEventDefault(e);
         var $ = this,
             picker = getReference($);
-        insertAtSelection($, e.clipboardData.getData('text/plain'));
-        delay(function () {
-            return picker.value = getText($), selectTo($);
-        })[0](1);
+        setValuePicker(1, picker), insertAtSelection($, e.clipboardData.getData('text/plain'));
     }
 
     function onPointerDownMask(e) {
@@ -1019,12 +1018,10 @@
         }
         var _mask = picker._mask,
             mask = picker.mask,
-            state = picker.state,
             _step = _mask._step,
             down = _step.down,
-            up = _step.up;
-        state.n;
-        var target = e.target,
+            up = _step.up,
+            target = e.target,
             targetDown = target,
             targetUp = target;
         if (down === targetDown || up === targetUp) {
@@ -1048,9 +1045,8 @@
     function onPointerDownStepDown(e) {
         offEventDefault(e);
         var $ = this,
-            picker = getReference($);
-        picker.max;
-        var min = picker.min,
+            picker = getReference($),
+            min = picker.min,
             state = picker.state,
             step = picker.step,
             strict = state.strict;
@@ -1064,9 +1060,8 @@
         offEventDefault(e);
         var $ = this,
             picker = getReference($),
-            max = picker.max;
-        picker.min;
-        var state = picker.state,
+            max = picker.max,
+            state = picker.state,
             step = picker.step,
             strict = state.strict;
         cycleValue.call($, picker, step, strict && function () {
@@ -1198,7 +1193,6 @@
                 }
                 value = +(v = (value != null ? value : "") + "");
                 var _mask = $._mask,
-                    mask = $.mask,
                     max = $.max,
                     min = $.min,
                     self = $.self,
@@ -1210,7 +1204,7 @@
                 setText(input, v);
                 "" !== v ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
                 if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
-                    setAria(mask, TOKEN_INVALID, true);
+                    setError($);
                     if (!isNumber(value)) {
                         $.fire('not.number', [v]);
                     } else if (0 !== value % step) {
@@ -1224,7 +1218,7 @@
                         return $;
                     }
                 } else {
-                    letAria(mask, TOKEN_INVALID);
+                    letError(0, $);
                     $.fire('is.number', [value]);
                 }
                 return setValue(self, v), $.fire('change', ["" !== v ? v : null]);
