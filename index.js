@@ -788,6 +788,8 @@
     var EVENT_MOUSE_DOWN = EVENT_MOUSE + EVENT_DOWN;
     var EVENT_MOUSE_UP = EVENT_MOUSE + EVENT_UP;
     var EVENT_PASTE = 'paste';
+    var EVENT_RESET = 'reset';
+    var EVENT_SUBMIT = 'submit';
     var EVENT_TOUCH = 'touch';
     var EVENT_TOUCH_END = EVENT_TOUCH + 'end';
     var EVENT_TOUCH_START = EVENT_TOUCH + 'start';
@@ -800,6 +802,7 @@
     var KEY_PAGE = 'Page';
     var KEY_PAGE_DOWN = KEY_PAGE + KEY_DOWN;
     var KEY_PAGE_UP = KEY_PAGE + KEY_UP;
+    var KEY_TAB = 'Tab';
     var TOKEN_FALSE = 'false';
     var TOKEN_INVALID = EVENT_INVALID;
     var TOKEN_TAB_INDEX = 'tabIndex';
@@ -823,12 +826,16 @@
         setValuePicker = _delay4[0];
     var _delay5 = delay(function (picker) {
             var _mask = picker._mask,
-                hint = _mask.hint,
                 input = _mask.input;
-            getText(input, 0) ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
+            toggleHintByValue(picker, getText(input, 0));
         }),
         _delay6 = _maybeArrayLike(_slicedToArray, _delay5, 1),
         toggleHint = _delay6[0];
+    var toggleHintByValue = function toggleHintByValue(picker, value) {
+        var _mask = picker._mask,
+            hint = _mask.hint;
+        value ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
+    };
     var name = 'NumberPicker';
     var _repeat = repeat(function (picker, step) {
             cycleValue.call(this, picker, step, repeatStop);
@@ -948,12 +955,12 @@
             min = picker.min,
             state = picker.state,
             step = picker.step,
-            hint = _mask.hint,
+            input = _mask.input,
             strict = state.strict;
         if ('deleteContent' === inputType.slice(0, 13) && 0 === value) {
-            letStyle(hint, TOKEN_VISIBILITY);
+            toggleHintByValue(picker, 0);
         } else if ('insertText' === inputType) {
-            setStyle(hint, TOKEN_VISIBILITY, 'hidden');
+            toggleHintByValue(picker, 1);
         }
         if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
             setError(picker);
@@ -967,7 +974,7 @@
                 picker.fire('min.number', [value, min]);
             }
             if (strict) {
-                return;
+                return setText(input, ""), focusTo(input), selectTo(input);
             }
         } else {
             letError(0, picker);
@@ -991,13 +998,20 @@
             keyIsShift = e.shiftKey,
             picker = getReference($),
             step = picker.step;
-        if (keyIsAlt || keyIsCtrl || keyIsShift);
-        else if (KEY_ARROW_DOWN === key || KEY_PAGE_DOWN === key) {
+        if (keyIsAlt);
+        else if (keyIsCtrl);
+        else if (keyIsShift) {
+            if (KEY_TAB === key) {
+                selectToNone();
+            }
+        } else if (KEY_ARROW_DOWN === key || KEY_PAGE_DOWN === key) {
             exit = true;
             cycleValue.call($, picker, -step);
         } else if (KEY_ARROW_UP === key || KEY_PAGE_UP === key) {
             exit = true;
             cycleValue.call($, picker, step);
+        } else if (KEY_TAB === key) {
+            selectToNone();
         }
         exit && offEventDefault(e);
     }
@@ -1180,6 +1194,22 @@
                 return $.state.step = isNumber(value = +value) && value > 0 ? value : 1, $;
             }
         },
+        text: {
+            get: function get() {
+                return getText(this._mask.input);
+            },
+            set: function set(value) {
+                var $ = this,
+                    _active = $._active;
+                if (!_active) {
+                    return $;
+                }
+                var _mask = $._mask,
+                    input = _mask.input,
+                    v;
+                return setText(input, v = _fromValue(value)), toggleHintByValue($, v), $;
+            }
+        },
         value: {
             get: function get() {
                 var value = getValue(this.self);
@@ -1199,11 +1229,9 @@
                     self = $.self,
                     state = $.state,
                     step = $.step,
-                    hint = _mask.hint,
                     input = _mask.input,
                     strict = state.strict;
-                setText(input, v);
-                "" !== v ? setStyle(hint, TOKEN_VISIBILITY, 'hidden') : letStyle(hint, TOKEN_VISIBILITY);
+                setText(input, v), toggleHintByValue($, v);
                 if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
                     setError($);
                     if (!isNumber(value)) {
@@ -1216,7 +1244,7 @@
                         $.fire('min.number', [value, min]);
                     }
                     if (strict) {
-                        return $;
+                        return setText(input, ""), $;
                     }
                 } else {
                     letError(0, $);
@@ -1273,15 +1301,15 @@
                 'class': n + '__step-up',
                 'tabindex': -1
             });
-            getParentForm(self);
+            var form = getParentForm(self);
             var mask = setElement('div', {
                 'aria': {
                     'disabled': isDisabledSelf ? TOKEN_TRUE : false,
                     'readonly': isReadOnlySelf ? TOKEN_TRUE : false,
                     'required': isRequiredSelf ? TOKEN_TRUE : false,
-                    'valuemax': 9999,
-                    'valuemin': 0,
-                    'valuenow': 0
+                    'valuemax': theInputMax ? theInputMax : false,
+                    'valuemin': theInputMin ? theInputMin : false,
+                    'valuenow': theInputValue ? theInputValue : false
                 },
                 'class': n,
                 'role': 'spinbutton'
@@ -1342,12 +1370,12 @@
             setClass(self, n + '__self');
             setNext(self, mask);
             setChildLast(mask, self);
-            // if (form) {
-            //     onEvent(EVENT_RESET, form, onResetForm);
-            //     onEvent(EVENT_SUBMIT, form, onSubmitForm);
-            //     setID(form);
-            //     setReference(form, $);
-            // }
+            if (form) {
+                onEvent(EVENT_RESET, form, onResetForm);
+                onEvent(EVENT_SUBMIT, form, onSubmitForm);
+                setID(form);
+                setReference(form, $);
+            }
             onEvent(EVENT_FOCUS, self, onFocusSelf);
             onEvent(EVENT_INVALID, self, onInvalidSelf);
             // onEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
@@ -1423,17 +1451,16 @@
                 self = $.self,
                 state = $.state,
                 _step = _mask._step,
-                input = _mask.input;
-            _mask.value;
-            var down = _step.down,
+                input = _mask.input,
+                down = _step.down,
                 up = _step.up;
-            getParentForm(self);
+            var form = getParentForm(self);
             $._active = false;
             $._value = null;
-            // if (form) {
-            //     offEvent(EVENT_RESET, form, onResetForm);
-            //     offEvent(EVENT_SUBMIT, form, onSubmitForm);
-            // }
+            if (form) {
+                offEvent(EVENT_RESET, form, onResetForm);
+                offEvent(EVENT_SUBMIT, form, onSubmitForm);
+            }
             offEvent(EVENT_BLUR, down, onBlurStepDown);
             offEvent(EVENT_BLUR, input, onBlurTextInput);
             offEvent(EVENT_BLUR, up, onBlurStepUp);
