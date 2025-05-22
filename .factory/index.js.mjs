@@ -129,7 +129,12 @@ function onBlurStepUp() {
 }
 
 function onBlurTextInput() {
-    onBlurStepDown.call(this);
+    let $ = this,
+        picker = getReference($),
+        {mask} = picker;
+    onBlurStepDown.call($);
+    onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
+    onEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
 }
 
 function onCutTextInput(e) {
@@ -156,11 +161,13 @@ function onFocusTextInput() {
     letErrorAbort();
     let $ = this,
         picker = getReference($),
-        {max, min, step} = picker,
+        {mask, max, min, step} = picker,
         value = +getText($); // Take from the current text
     if (!isNumber(value) || 0 !== (value % step) || value > max || value < min) {
         setError(picker);
     }
+    offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
+    offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
     selectTo($);
 }
 
@@ -203,7 +210,7 @@ function onInputTextInput(e) {
         letError(0, picker);
         picker.fire('is.number', [value]);
     }
-    setValue(self, value += ""), picker.fire('change', ["" !== value ? value : null]);
+    setValue(self, v), picker.fire('change', ["" !== v ? v : null]);
 }
 
 function onInvalidSelf(e) {
