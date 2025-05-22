@@ -14,23 +14,11 @@
   </head>
   <body>
     <main>
-      <p><input max="25" min="0" step="1" type="number"></p>
+      <p><input type="number"></p>
     </main>
     <script src="index.js"></script>
     <script>
       const picker = new NumberPicker(document.querySelector('input'));
-      picker.on('max.number', function (current, max) {
-          console.error({
-              current,
-              max
-          });
-      });
-      picker.on('min.number', function (current, min) {
-          console.error({
-              current,
-              min
-          });
-      });
     </script>
   </body>
 </html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta content="#000" name="theme-color">
+    <meta content="width=device-width" name="viewport">
+    <meta content="Accessible custom `&lt;input type=&quot;number&quot;&gt;` element." name="description">
+    <title>Number Picker 1.0.0</title>
+    <link href="../layout/index.min.css" rel="stylesheet">
+    <link href="../layout/anchor/index.min.css" rel="stylesheet">
+    <link href="index.min.css" rel="stylesheet">
+    <style>
+      body {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 60rem;
+      }
+      .number-picker {
+        background: #fff;
+        border-width: 2px;
+        color: #000;
+        flex: 1;
+      }
+      .number-picker:focus-within {
+        border-color: #00f;
+      }
+      .number-picker[aria-invalid='true'] {
+        background: rgba(255, 0, 0, 0.125);
+        border-color: #f00;
+        color: #000;
+      }
+      .number-picker__flex {
+        gap: 2px;
+        padding: 2px;
+      }
+      .number-picker__step {
+        gap: 6px;
+      }
+      .number-picker__step-down,
+      .number-picker__step-up,
+      .number-picker__text {
+        border-width: 0;
+        padding: 0 0.5em;
+      }
+      .number-picker__step-down {
+        align-items: start;
+      }
+      .number-picker__step-up {
+        align-items: end;
+      }
+      .number-picker__step-down:focus,
+      .number-picker__step-up:focus {
+        color: #00f;
+        outline: 0;
+      }
+      .number-picker[aria-invalid='true'] .number-picker__step-down:focus,
+      .number-picker[aria-invalid='true'] .number-picker__step-up:focus {
+        color: #f00;
+      }
+    </style>
+  </head>
+  <body>
+    <p role="alert">Do you like this project? Please support my <a href="https://github.com/mecha-cms">Mecha CMS</a> project too. Thank you!</p>
+    <header>
+      <hgroup>
+        <h1>Number Picker 1.0.0</h1>
+        <p>Accessible custom <code>&lt;input type="number"&gt;</code> element.</p>
+      </hgroup>
+      <p>TODO</p>
+    </header>
+    <main>
+      <form method="get" target="_blank">
+        <p role="group"><input max="25" min="-25" name="index" placeholder="0" step="1" type="number"> <button type="submit">Submit</button> <button type="reset">Reset</button></p>
+      </form>
+      <h2 id="usage"><a aria-hidden="true" href="#usage">#</a> Usage</h2>
+      <h3 id="browser"><a aria-hidden="true" href="#browser">#</a> Browser</h3>
+      <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html dir="ltr"&gt;
+  &lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;link href="<a href="index.min.css" target="_blank">./index.min.css</a>" rel="stylesheet"&gt;
+    &lt;style&gt;
+      .number-picker {
+        min-width: 1.25em;
+      }
+    &lt;/style&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;p&gt;
+      &lt;input type="number"&gt;
+    &lt;/p&gt;
+    &lt;script src="<a href="index.min.js" target="_blank">./index.min.js</a>"&gt;&lt;/script&gt;
+    &lt;script&gt;
+      const picker = new NumberPicker(document.querySelector('input'));
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+      <h3 id="node-js"><a aria-hidden="true" href="#node-js">#</a> Node.js</h3>
+      <p>Functions and methods in this application are mostly native JavaScript and are intended for use by the browser. Node.js doesn’t know about the DOM, so this kind of practice will probably be used more often to build new browser packages than to be used directly in the Node.js server.</p>
+      <h4 id="cjs"><a aria-hidden="true" href="#cjs">#</a> CommonJS</h4>
+      <pre><code>const NumberPicker = require('@taufik-nurrohman/number-picker').default;
+
+const picker = new NumberPicker(document.querySelector('input'));</code></pre>
+      <h4 id="mjs"><a aria-hidden="true" href="#mjs">#</a> ECMAScript</h4>
+      <pre><code>import NumberPicker from '@taufik-nurrohman/number-picker';
+
+const picker = new NumberPicker(document.querySelector('input'));</code></pre>
+      <h2 id="tests"><a aria-hidden="true" href="#tests">#</a> Tests</h2>
+      <ul>
+        <li><a href="test.html" target="_blank">No Idea?</a></li>
+      </ul>
+      <h2 id="constructors"><a aria-hidden="true" href="#constructor">#</a> Constructors</h2>
+      <h3 id="constructor-number-picker"><a aria-hidden="true" href="#constructor-number-picker">#</a> <code>NumberPicker(self, state)</code></h3>
+      <pre><code>const picker = new NumberPicker(self, strict = false);</code></pre>
+      <pre><code>const picker = new NumberPicker(self, state = {
+    max: null,
+    min: null,
+    size: null,
+    strict: false,
+    time: {
+        error: 1000,
+        search: [10, 500]
+    },
+    with: []
+});</code></pre>
+      <h2 id="parameters"><a aria-hidden="true" href="#parameters">#</a> Parameters</h2>
+      <h3 id="parameter-self"><a aria-hidden="true" href="#parameter-self">#</a> <code>self</code></h3>
+      <p>The <code>&lt;input&gt;</code> element.</p>
+      <h3 id="parameter-strict"><a aria-hidden="true" href="#parameter-strict">#</a> <code>strict</code></h3>
+      <p>If its value is set to <code>true</code>, any invalid input will be rejected immediately. Increasing the number will automatically stop at the maximum number, and decreasing the number will automatically stop at the minimum number.</p>
+      <h3 id="parameter-state"><a aria-hidden="true" href="#parameter-state">#</a> <code>state</code></h3>
+      <p>The configuration data.</p>
+      <h4 id="parameter-state-max"><a aria-hidden="true" href="#parameter-state-max">#</a> <code>state.max</code></h4>
+      <p>Determines the maximum valid number value, with the default value follows what the <code>max</code> attribute value of the <code>&lt;input&gt;</code> element. If no <code>max</code> attribute exists or if its value is not a number, it will default to <code>Infinity</code>.</p>
+      <pre><code>const picker = new NumberPicker(document.querySelector('input'), {
+    max: 25
+});</code></pre>
+      <h4 id="parameter-state-min"><a aria-hidden="true" href="#parameter-state-min">#</a> <code>state.min</code></h4>
+      <p>Determines the minimum valid number value, with the default value follows what the <code>min</code> attribute value of the <code>&lt;input&gt;</code> element. If no <code>min</code> attribute exists or if its value is not a number, it will default to <code>-Infinity</code>.</p>
+      <pre><code>const picker = new NumberPicker(document.querySelector('input'), {
+    min: 5
+});</code></pre>
+      <h4 id="parameter-state-step"><a aria-hidden="true" href="#parameter-state-step">#</a> <code>state.step</code></h4>
+      <p>Determines how much the number will increase or decrease with each step, with the default value follows what the <code>step</code> attribute value of the <code>&lt;input&gt;</code> element. If no <code>step</code> attribute exists or if its value is not a number, it will default to <code>1</code>.</p>
+      <pre><code>const picker = new NumberPicker(document.querySelector('input'), {
+    step: 0.25
+});</code></pre>
+      <h4 id="parameter-state-strict"><a aria-hidden="true" href="#parameter-state-strict">#</a> <code>state.strict</code></h4>
+      <p>If its value is set to <code>true</code>, any invalid input will be rejected immediately. Increasing the number will automatically stop at the maximum number, and decreasing the number will automatically stop at the minimum number.</p>
+      <pre><code>const picker = new NumberPicker(document.querySelector('input'), {
+    strict: true
+});</code></pre>
+      <h4 id="parameter-state-time"><a aria-hidden="true" href="#parameter-state-time">#</a> <code>state.time</code></h4>
+      <p>Stores configuration data related to time in milliseconds.</p>
+      <h5 id="parameter-state-time-error"><a aria-hidden="true" href="#parameter-state-time-error">#</a> <code>state.time.error</code></h5>
+      <p>Determines how long the invalid state is presented to the user. If the value is less than or equal to <code>0</code>, the built-in invalid state will be disabled.</p>
+      <pre><code>const picker = new NumberPicker(document.querySelector('input'), {
+    time: {
+        error: 999999999 // As long as possible
+    }
+});</code></pre>
+      <pre><code>const picker = new NumberPicker(document.querySelector('input'), {
+    time: {
+        error: 0 // Disable the built-in invalid state
+    }
+});</code></pre>
+      <h4 id="parameter-state-with"><a aria-hidden="true" href="#parameter-state-with">#</a> <code>state.with</code></h4>
+      <p>List of <a href="#anatomy-of-an-extension">callable functions or objects containing an <code>attach()</code> method</a> to be invoked each time the application is initialized. A very simple “plugin” system.</p>
+      <h2 id="methods"><a aria-hidden="true" href="#methods">#</a> Methods</h2>
+      <h3 id="instance-methods"><a aria-hidden="true" href="#instance-methods">#</a> Instance Methods</h3>
+      <p>Instance methods are methods available through the results of an <a href="#constructor-number-picker"><code>NumberPicker</code></a> construct.</p>
+      <h4 id="instance-method-attach"><a aria-hidden="true" href="#instance-method-attach">#</a> <code>picker.attach(self, state)</code></h4>
+      <p>Re-initializes the application and its <a href="#extensions">extensions</a> after it has been detached.</p>
+      <pre><code>picker.attach();</code></pre>
+      <h4 id="instance-method-blur"><a aria-hidden="true" href="#instance-method-blur">#</a> <code>picker.blur()</code></h4>
+      <p>Blurs from the number picker’s input.</p>
+      <pre><code>picker.blur();</code></pre>
+      <h4 id="instance-method-detach"><a aria-hidden="true" href="#instance-method-detach">#</a> <code>picker.detach()</code></h4>
+      <p>Removes the application view and executes the <code>detach()</code> method of the <a href="#extensions">extensions</a>, if they are present.</p>
+      <pre><code>picker.detach();</code></pre>
+      <h4 id="instance-method-fire"><a aria-hidden="true" href="#instance-method-fire">#</a> <code>picker.fire(event, data, that)</code></h4>
+      <p>Fires an event.</p>
+      <pre><code>picker.fire('change', []);</code></pre>
+      <h4 id="instance-method-focus"><a aria-hidden="true" href="#instance-method-focus">#</a> <code>picker.focus(mode = true)</code></h4>
+      <p>Focuses to the number picker’s input.</p>
+      <pre><code>picker.focus(); // Focus and select the text
+picker.focus(-1); // Focus and put the caret to the start of the text
+picker.focus(+1); // Focus and put the caret to the end of the text</code></pre>
+      <h4 id="instance-method-off"><a aria-hidden="true" href="#instance-method-off">#</a> <code>picker.off(event, task)</code></h4>
+      <p>Removes an event.</p>
+      <pre><code>picker.off('change'); // Remove all events from the `change` event container
+picker.off('change', onChange); // Remove `onChange` event from the `change` event container</code></pre>
+      <h4 id="instance-method-on"><a aria-hidden="true" href="#instance-method-on">#</a> <code>picker.on(event, task)</code></h4>
+      <p>Adds a new event.</p>
+      <pre><code>picker.on('change', function () {
+    console.log(this.value);
+});</code></pre>
+      <pre><code>function onChange() {
+    console.log(this.value);
+}
+
+picker.on('change', onChange);</code></pre>
+      <h4 id="instance-method-reset"><a aria-hidden="true" href="#instance-method-reset">#</a> <code>picker.reset(focus, mode = true)</code></h4>
+      <p>Resets the number picker’s value to its initial value.</p>
+      <pre><code>picker.reset(); // Reset the number picker’s value
+picker.reset(true); // Reset the number picker’s value and focus to the number picker’s input</code></pre>
+      <h3 id="static-methods"><a aria-hidden="true" href="#static-methods">#</a> Static Methods</h3>
+      <p>Static methods are methods available directly on the <a href="#constructor-number-picker"><code>NumberPicker</code></a> object.</p>
+      <h4 id="static-method-from"><a aria-hidden="true" href="#static-method-from">#</a> <code>NumberPicker.from(self, state)</code></h4>
+      <p>Creates a new <a href="#constructor-number-picker"><code>NumberPicker</code></a> instance.</p>
+      <pre><code>const picker = NumberPicker.from(document.querySelector('input'));</code></pre>
+      <h4 id="static-method-of"><a aria-hidden="true" href="#static-method-of">#</a> <code>NumberPicker.of(self)</code></h4>
+      <p>Gets <a href="#constructor-number-picker"><code>NumberPicker</code></a> instance of an element.</p>
+      <pre><code>document.querySelectorAll('input').forEach(self =&gt; {
+    const picker = NumberPicker.of(self);
+});</code></pre>
+      <h2 id="properties"><a aria-hidden="true" href="#properties">#</a> Properties</h2>
+      <h3 id="instance-properties"><a aria-hidden="true" href="#instance-properties">#</a> Instance Properties</h3>
+      <p>Instance properties are properties available through the results of an <a href="#constructor-number-picker"><code>NumberPicker</code></a> construct.</p>
+      <h4 id="instance-property-active"><a aria-hidden="true" href="#instance-property-active">#</a> <code>picker.active</code></h4>
+      <p>Gets or sets the active state of the number picker. By setting the value to <code>false</code> or <code>true</code>, the disabled state of the source element will also be set automatically.</p>
+      <pre><code>picker.active = false; // // Make the number picker “disabled”
+picker.active = true; // // Make the number picker “enabled”</code></pre>
+      <h4 id="instance-property-fix"><a aria-hidden="true" href="#instance-property-fix">#</a> <code>picker.fix</code></h4>
+      <p>Gets or sets the read-only state of the number picker. By setting the value to <code>false</code> or <code>true</code>, the read-only state of the source element will also be set automatically. This only applies to the number picker that is sourced from an <code>&lt;input&gt;</code> element.</p>
+      <pre><code>picker.fix = true; // Make the number picker “read-only”</code></pre>
+      <h4 id="instance-property-hooks"><a aria-hidden="true" href="#instance-property-hooks">#</a> <code>picker.hooks</code></h4>
+      <p>Returns the events data.</p>
+      <pre><code>console.log(picker.hooks);</code></pre>
+      <h4 id="instance-property-mask"><a aria-hidden="true" href="#instance-property-mask">#</a> <code>picker.mask</code></h4>
+      <p>Returns the number picker’s mask.</p>
+      <pre><code>picker.mask.classList.add(picker.state.n + '--dark');</code></pre>
+      <h4 id="instance-property-max"><a aria-hidden="true" href="#instance-property-max">#</a> <code>picker.max</code></h4>
+      <p>Proxy that passes to the <a href="#parameter-state-max"><code>picker.state.max</code></a> property, with additional actions that are executed while the value is being set.</p>
+      <pre><code>console.log(picker.max); // Returns the `picker.state.max` value</code></pre>
+      <pre><code>picker.max = 5; // Set the maximum valid number to `5`</code></pre>
+      <h4 id="instance-property-min"><a aria-hidden="true" href="#instance-property-min">#</a> <code>picker.min</code></h4>
+      <p>Proxy that passes to the <a href="#parameter-state-min"><code>picker.state.min</code></a> property, with additional actions that are executed while the value is being set.</p>
+      <pre><code>console.log(picker.min); // Returns the `picker.state.min` value</code></pre>
+      <pre><code>picker.min = 5; // Set the minimum valid number to `5`</code></pre>
+      <h4 id="instance-property-self"><a aria-hidden="true" href="#instance-property-self">#</a> <code>picker.self</code></h4>
+      <p>Returns the <code>&lt;input&gt;</code> element.</p>
+      <pre><code>console.log(picker.self.getAttribute('name'));</code></pre>
+      <h4 id="instance-property-state"><a aria-hidden="true" href="#instance-property-state">#</a> <code>picker.state</code></h4>
+      <p>Returns the application states if any.</p>
+      <pre><code>console.log(picker.state);</code></pre>
+      <h4 id="instance-property-text"><a aria-hidden="true" href="#instance-property-text">#</a> <code>picker.text</code></h4>
+      <p>Gets or sets the current text of the number picker’s input.</p>
+      <pre><code>console.log(picker.text);</code></pre>
+      <pre><code>picker.text = '5';</code></pre>
+      <h4 id="instance-property-value"><a aria-hidden="true" href="#Instance-property-value">#</a> <code>picker.value</code></h4>
+      <p>Proxy that passes to the <a href="#instance-property-self"><code>picker.self.value</code></a> property, with additional actions that are executed while the value is being set.</p>
+      <pre><code>console.log(picker.value);</code></pre>
+      <pre><code>picker.on('change', function () {
+    console.log(this.value);
+});
+
+picker.value = '5';</code></pre>
+      <h4 id="instance-property-vital"><a aria-hidden="true" href="#instance-property-vital">#</a> <code>picker.vital</code></h4>
+      <p>Gets or sets the required state of the number picker. By setting the value to <code>false</code> or <code>true</code>, the required state of the source element will also be set automatically.</p>
+      <pre><code>picker.vital = true; // Make the number picker “required”</code></pre>
+      <h3 id="static-properties"><a aria-hidden="true" href="#static-properties">#</a> Static Properties</h3>
+      <p>Static properties are properties available directly on the <a href="#constructor-number-picker"><code>NumberPicker</code></a> object.</p>
+      <h4 id="static-property-prototype"><a aria-hidden="true" href="#static-property-prototype">#</a> <code>NumberPicker._</code></h4>
+      <p>Alias for <code>NumberPicker.prototype</code>.</p>
+      <pre><code>NumberPicker._.clear = function () {
+    return (this.value = ""), this;
+};
+
+const picker = new NumberPicker(document.querySelector('input'));
+
+picker.clear(); // Clear value</code></pre>
+      <h4 id="static-property-state"><a aria-hidden="true" href="#static-property-state">#</a> <code>NumberPicker.state</code></h4>
+      <p>Returns the default values of <a href="#instance-property-state"><code>picker.state</code></a>.</p>
+      <pre><code>const picker = new NumberPicker(document.querySelector('input'), {
+    foo: 'bar'
+});
+
+console.log([NumberPicker.state, picker.state]);</code></pre>
+      <h4 id="static-property-version"><a aria-hidden="true" href="#static-property-version">#</a> <code>NumberPicker.version</code></h4>
+      <p>Returns the application version.</p>
+      <h2 id="extensions"><a aria-hidden="true" href="#extensions">#</a> Extensions</h2>
+      <h3 id="anatomy-of-an-extension"><a aria-hidden="true" href="#anatomy-of-an-extension">#</a> Anatomy of an Extension</h3>
+      <p>Extension as a function:</p>
+      <pre><code>function Extension(self, state = {}) {
+    this.test = 1;
+    return this;
+}
+
+Object.defineProperty(Extension, 'name', {
+    value: 'Extension'
+});</code></pre>
+      <p>Extension as an object:</p>
+      <pre><code>const Extension = {
+    attach: function (self, state = {}) {
+        this.test = 1;
+        return this;
+    },
+    detach: function (self, state = {}) {
+        delete this.test;
+        return this;
+    },
+    name: 'Extension'
+};</code></pre>
+      <h3 id="usage-of-an-extension"><a aria-hidden="true" href="#usage-of-an-extension">#</a> Usage of an Extension</h3>
+      <p>As a core extension:</p>
+      <pre><code>NumberPicker.state.with.push(Extension);</code></pre>
+      <p>As an optional extension:</p>
+      <pre><code>const picker = new NumberPicker(document.querySelector('input'), {
+    with: [Extension]
+});</code></pre>
+      <h3 id="list-of-extensions"><a aria-hidden="true" href="#list-of-extensions">#</a> List of Extensions</h3>
+      <ul>
+        <li><a aria-disabled="true">Custom Scroll Bar</a></li>
+        <li><a aria-disabled="true">Highlight Search Term</a></li>
+      </ul>
+      <h2 id="license"><a aria-hidden="true" href="#license">#</a> License</h2>
+      <p>This project is licensed under the terms of the <a href="LICENSE">MIT</a> license. If this project has saved you time, please <a href="https://paypal.me/tatautaufik" target="_blank">donate</a>. Thank you! ❤️</p>
+    </main>
+    <footer>
+      <hr>
+      <p>© 2025 <a href="/">Taufik Nurrohman</a></p>
+    </footer>
+    <script src="index.min.js"></script>
+    <script>
+      const picker = new NumberPicker(document.forms[0].index);
+      picker.on('change', value => console.log(value));
+    </script>
+  </body>
+</html>

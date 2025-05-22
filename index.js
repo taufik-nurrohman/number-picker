@@ -868,6 +868,11 @@
             picker.value = value = step < 0 ? min : max;
             setAria(mask, 'valuenow', value);
         }
+        console.log({
+            value: value,
+            max: max,
+            min: min
+        });
         if (value > max || value < min) {
             if (strict) {
                 return focusTo($), selectTo($), onStop && onStop(picker);
@@ -898,7 +903,6 @@
     }
 
     function onBlurTextInput() {
-        // TODO: Validate value on blur
         onBlurStepDown.call(this);
     }
 
@@ -1089,6 +1093,27 @@
         repeatStop();
     }
 
+    function onResetForm() {
+        getReference(this).reset();
+    }
+
+    function onSubmitForm(e) {
+        var $ = this,
+            picker = getReference($),
+            max = picker.max,
+            min = picker.min,
+            self = picker.self,
+            value = picker.value;
+        value = +value;
+        if (value < min) {
+            onInvalidSelf.call(self);
+            picker.fire('min.number', [value, min]), offEventDefault(e);
+        } else if (value > max) {
+            onInvalidSelf.call(self);
+            picker.fire('max.number', [value, max]), offEventDefault(e);
+        }
+    }
+
     function onWheelMask(e) {
         offEventDefault(e);
         var $ = this,
@@ -1139,7 +1164,8 @@
         'step': null,
         'strict': false,
         'time': {
-            'error': 1000
+            'error': 1000,
+            'repeat': [500, 50]
         },
         'with': []
     };
@@ -1166,32 +1192,54 @@
         },
         max: {
             get: function get() {
-                var max = this.state.max;
-                return Infinity === (max = +max) || isNumber(max) && max >= 0 ? max : Infinity;
+                var _this$state = this.state,
+                    max = _this$state.max;
+                _this$state.min;
+                var step = _this$state.step;
+                step = step != null ? step : 1;
+                return Infinity === (max = +max) || isNumber(max) && 0 === max % step ? max : Infinity;
             },
             set: function set(value) {
-                var $ = this;
-                return $.state.max = isNumber(value = +value) && value >= 0 ? value : Infinity, $;
+                var $ = this,
+                    state = $.state;
+                state.min;
+                var step = state.step;
+                step = step != null ? step : 1;
+                return state.max = isNumber(value = +value) && 0 === value % step ? value : Infinity, $;
             }
         },
         min: {
             get: function get() {
-                var min = this.state.min;
-                return -Infinity === (min = +min) || isNumber(min) && min >= 0 ? min : -Infinity;
+                var _this$state2 = this.state;
+                _this$state2.max;
+                var min = _this$state2.min,
+                    step = _this$state2.step;
+                step = step != null ? step : 1;
+                return -Infinity === (min = +min) || isNumber(min) && 0 === min % step ? min : -Infinity;
             },
             set: function set(value) {
-                var $ = this;
-                return $.state.min = isNumber(value = +value) && value >= 0 ? value : -Infinity, $;
+                var $ = this,
+                    state = $.state;
+                state.max;
+                var step = state.step;
+                step = step != null ? step : 1;
+                return state.min = isNumber(value = +value) && 0 === value % step ? value : -Infinity, $;
             }
         },
         step: {
             get: function get() {
-                var step = this.state.step;
+                var _this$state3 = this.state;
+                _this$state3.max;
+                _this$state3.min;
+                var step = _this$state3.step;
                 return isNumber(step = +step) && step > 0 ? step : 1;
             },
             set: function set(value) {
-                var $ = this;
-                return $.state.step = isNumber(value = +value) && value > 0 ? value : 1, $;
+                var $ = this,
+                    state = $.state;
+                state.max;
+                state.min;
+                return state.step = isNumber(value = +value) && value > 0 ? value : 1, $;
             }
         },
         text: {
@@ -1378,15 +1426,9 @@
             }
             onEvent(EVENT_FOCUS, self, onFocusSelf);
             onEvent(EVENT_INVALID, self, onInvalidSelf);
-            // onEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
             onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
-            // onEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
             onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
-            // onEvent(EVENT_RESIZE, W, onResizeWindow, {passive: true});
-            // onEvent(EVENT_SCROLL, W, onScrollWindow, {passive: true});
             onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
-            // onEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot, {passive: true});
-            // onEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
             onEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
             self[TOKEN_TAB_INDEX] = -1;
             setReference(mask, $);
@@ -1472,15 +1514,9 @@
             offEvent(EVENT_INVALID, self, onInvalidSelf);
             offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
             offEvent(EVENT_PASTE, input, onPasteTextInput);
-            // offEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
             offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
-            // offEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
             offEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
-            // offEvent(EVENT_RESIZE, W, onResizeWindow);
-            // offEvent(EVENT_SCROLL, W, onScrollWindow);
             offEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
-            // offEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot);
-            // offEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
             offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
             offEvent(EVENT_WHEEL, mask, onWheelMask);
             // Detach extension(s)

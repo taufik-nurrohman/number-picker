@@ -96,6 +96,7 @@ function cycleValue(picker, step, onStop, onStep) {
         picker.value = value = step < 0 ? min : max;
         setAria(mask, 'valuenow', value);
     }
+    console.log({value,max,min});
     if (value > max || value < min) {
         if (strict) {
             return focusTo($), selectTo($), (onStop && onStop(picker));
@@ -126,7 +127,6 @@ function onBlurStepUp() {
 }
 
 function onBlurTextInput() {
-    // TODO: Validate value on blur
     onBlurStepDown.call(this);
 }
 
@@ -297,6 +297,24 @@ function onPointerUpRoot() {
     repeatStop();
 }
 
+function onResetForm() {
+    getReference(this).reset();
+}
+
+function onSubmitForm(e) {
+    let $ = this,
+        picker = getReference($),
+        {max, min, self, value} = picker;
+    value = +value;
+    if (value < min) {
+        onInvalidSelf.call(self);
+        picker.fire('min.number', [value, min]), offEventDefault(e);
+    } else if (value > max) {
+        onInvalidSelf.call(self);
+        picker.fire('max.number', [value, max]), offEventDefault(e);
+    }
+}
+
 function onWheelMask(e) {
     offEventDefault(e);
     let $ = this,
@@ -345,7 +363,8 @@ NumberPicker.state = {
     'step': null,
     'strict': false,
     'time': {
-        'error': 1000
+        'error': 1000,
+        'repeat': [500, 50]
     },
     'with': []
 };
@@ -376,32 +395,42 @@ setObjectAttributes(NumberPicker, {
     },
     max: {
         get: function () {
-            let {max} = this.state;
-            return Infinity === (max = +max) || (isNumber(max) && max >= 0) ? max : Infinity;
+            let {max, min, step} = this.state;
+            step = step ?? 1;
+            return Infinity === (max = +max) || (isNumber(max) && 0 === (max % step)) ? max : Infinity;
         },
         set: function (value) {
-            let $ = this;
-            return ($.state.max = isNumber(value = +value) && value >= 0 ? value : Infinity), $;
+            let $ = this,
+                {state} = $,
+                {min, step} = state;
+            step = step ?? 1;
+            return (state.max = isNumber(value = +value) && 0 === (value % step) ? value : Infinity), $;
         }
     },
     min: {
         get: function () {
-            let {min} = this.state;
-            return -Infinity === (min = +min) || (isNumber(min) && min >= 0) ? min : -Infinity;
+            let {max, min, step} = this.state;
+            step = step ?? 1;
+            return -Infinity === (min = +min) || (isNumber(min) && 0 === (min % step)) ? min : -Infinity;
         },
         set: function (value) {
-            let $ = this;
-            return ($.state.min = isNumber(value = +value) && value >= 0 ? value : -Infinity), $;
+            let $ = this,
+                {state} = $,
+                {max, step} = state;
+            step = step ?? 1;
+            return (state.min = isNumber(value = +value) && 0 === (value % step) ? value : -Infinity), $;
         }
     },
     step: {
         get: function () {
-            let {step} = this.state;
+            let {max, min, step} = this.state;
             return isNumber(step = +step) && step > 0 ? step : 1;
         },
         set: function (value) {
-            let $ = this;
-            return ($.state.step = isNumber(value = +value) && value > 0 ? value : 1), $;
+            let $ = this,
+                {state} = $,
+                {max, min} = state;
+            return (state.step = isNumber(value = +value) && value > 0 ? value : 1), $;
         }
     },
     text: {
@@ -578,15 +607,9 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         }
         onEvent(EVENT_FOCUS, self, onFocusSelf);
         onEvent(EVENT_INVALID, self, onInvalidSelf);
-        // onEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
         onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
-        // onEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
         onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
-        // onEvent(EVENT_RESIZE, W, onResizeWindow, {passive: true});
-        // onEvent(EVENT_SCROLL, W, onScrollWindow, {passive: true});
         onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
-        // onEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot, {passive: true});
-        // onEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
         onEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
         self[TOKEN_TAB_INDEX] = -1;
         setReference(mask, $);
@@ -668,16 +691,9 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         offEvent(EVENT_INVALID, self, onInvalidSelf);
         offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
         offEvent(EVENT_PASTE, input, onPasteTextInput);
-
-        // offEvent(EVENT_MOUSE_DOWN, R, onPointerDownRoot);
         offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
-        // offEvent(EVENT_MOUSE_MOVE, R, onPointerMoveRoot);
         offEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
-        // offEvent(EVENT_RESIZE, W, onResizeWindow);
-        // offEvent(EVENT_SCROLL, W, onScrollWindow);
         offEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
-        // offEvent(EVENT_TOUCH_MOVE, R, onPointerMoveRoot);
-        // offEvent(EVENT_TOUCH_START, R, onPointerDownRoot);
         offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
         offEvent(EVENT_WHEEL, mask, onWheelMask);
         // Detach extension(s)

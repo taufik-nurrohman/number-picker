@@ -110,14 +110,13 @@
   border-color: transparent;
   cursor: text;
   flex: 1;
-  user-select: text;
 }
 .number-picker__text span {
   flex: 1;
   position: relative;
   z-index: 1;
 }
-.number-picker__text span:empty::after {
+.number-picker__text span::after {
   content: "‌";
 }
 .number-picker__text span * {
@@ -127,7 +126,9 @@
   display: none;
 }
 .number-picker__text span + span {
+  align-items: center;
   bottom: 0;
+  display: flex;
   left: 0;
   opacity: 0.5;
   padding: inherit;
