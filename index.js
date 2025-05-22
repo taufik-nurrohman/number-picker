@@ -799,6 +799,7 @@
     var KEY_ARROW = 'Arrow';
     var KEY_ARROW_DOWN = KEY_ARROW + KEY_DOWN;
     var KEY_ARROW_UP = KEY_ARROW + KEY_UP;
+    var KEY_ENTER = 'Enter';
     var KEY_PAGE = 'Page';
     var KEY_PAGE_DOWN = KEY_PAGE + KEY_DOWN;
     var KEY_PAGE_UP = KEY_PAGE + KEY_UP;
@@ -868,11 +869,6 @@
             picker.value = value = step < 0 ? min : max;
             setAria(mask, 'valuenow', value);
         }
-        console.log({
-            value: value,
-            max: max,
-            min: min
-        });
         if (value > max || value < min) {
             if (strict) {
                 return focusTo($), selectTo($), onStop && onStop(picker);
@@ -971,7 +967,7 @@
             if (!isNumber(value)) {
                 picker.fire('not.number', [v]);
             } else if (0 !== value % step) {
-                picker.fire('not.step', [v]);
+                picker.fire('not.step', [value]);
             } else if (value > max) {
                 picker.fire('max.number', [value, max]);
             } else if (value < min) {
@@ -1014,6 +1010,8 @@
         } else if (KEY_ARROW_UP === key || KEY_PAGE_UP === key) {
             exit = true;
             cycleValue.call($, picker, step);
+        } else if (KEY_ENTER === key) {
+            exit = true;
         } else if (KEY_TAB === key) {
             selectToNone();
         }
