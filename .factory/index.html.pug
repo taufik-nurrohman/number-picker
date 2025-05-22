@@ -141,7 +141,6 @@ block content
       | const picker = new NumberPicker(self, state = {
       |     max: null,
       |     min: null,
-      |     size: null,
       |     strict: false,
       |     time: {
       |         error: 1000,
@@ -217,6 +216,28 @@ block content
       | const picker = new NumberPicker(document.querySelector('input'), {
       |     time: {
       |         error: 999999999 // As long as possible
+      |     }
+      | });
+    pre: code
+      | const picker = new NumberPicker(document.querySelector('input'), {
+      |     time: {
+      |         error: 0 // Disable the built-in invalid state
+      |     }
+      | });
+    h5#parameter-state-time-repeat
+      a(aria-hidden='true' href='#parameter-state-time-repeat') #
+      = ' '
+      code state.time.repeat
+    p It contains an array that determines how long the step button must be held down before the increase/decrease action starts to repeat.
+    pre: code
+      | const picker = new NumberPicker(document.querySelector('input'), {
+      |     time: {
+      |         repeat: [
+      |             // Start the repeat by holding down the step button for one second
+      |             1000,
+      |             // Repeat every 1 second
+      |             1000
+      |         ]
       |     }
       | });
     pre: code

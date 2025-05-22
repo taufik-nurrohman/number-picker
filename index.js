@@ -115,7 +115,7 @@
         return null === x;
     };
     var isNumber = function isNumber(x) {
-        return 'number' === typeof x;
+        return 'number' === typeof x && !Number.isNaN(x);
     };
     var isNumeric = function isNumeric(x) {
         return /^[+-]?(?:\d*\.)?\d+$/.test(x + "");
@@ -336,6 +336,9 @@
     var getChildren = function getChildren(parent, index, anyNode) {
         var children = _toArray$1(parent['child' + ('Nodes')]);
         return isNumber(index) ? children[index] || null : children;
+    };
+    var getElement = function getElement(query, scope) {
+        return (scope || D).querySelector(query);
     };
     var getID = function getID(node, batch) {
         if (batch === void 0) {
@@ -795,9 +798,11 @@
     var EVENT_TOUCH_START = EVENT_TOUCH + 'start';
     var EVENT_WHEEL = 'wheel';
     var KEY_DOWN = 'Down';
+    var KEY_LEFT = 'Left';
     var KEY_UP = 'Up';
     var KEY_ARROW = 'Arrow';
     var KEY_ARROW_DOWN = KEY_ARROW + KEY_DOWN;
+    var KEY_ARROW_LEFT = KEY_ARROW + KEY_LEFT;
     var KEY_ARROW_UP = KEY_ARROW + KEY_UP;
     var KEY_ENTER = 'Enter';
     var KEY_PAGE = 'Page';
@@ -940,23 +945,29 @@
 
     function onInputTextInput(e) {
         var $ = this,
-            inputType = e.inputType,
             picker = getReference($),
             _active = picker._active,
-            self = picker.self,
-            v,
-            value = +(v = getText($));
-        // Take from the current text
+            _fix = picker._fix;
+        if (_fix) {
+            return focusTo(picker), offEventDefault(e);
+        }
         if (!_active) {
             return offEventDefault(e);
         }
-        var _mask = picker._mask,
+        var inputType = e.inputType,
+            _mask = picker._mask,
             max = picker.max,
             min = picker.min,
+            self = picker.self,
             state = picker.state,
             step = picker.step,
             input = _mask.input,
-            strict = state.strict;
+            strict = state.strict,
+            time = state.time,
+            error = time.error,
+            v,
+            value = +(v = getText($));
+        // Take from the current text
         if ('deleteContent' === inputType.slice(0, 13) && 0 === value) {
             toggleHintByValue(picker, 0);
         } else if ('insertText' === inputType) {
@@ -974,7 +985,7 @@
                 picker.fire('min.number', [value, min]);
             }
             if (strict) {
-                return setText(input, ""), focusTo(input), selectTo(input);
+                return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, picker.value), focusTo(input), selectTo(input);
             }
         } else {
             letError(0, picker);
@@ -989,15 +1000,106 @@
         onBlurTextInput.call($), setError(getReference($));
     }
 
+    function onKeyDownStepDown(e) {
+        var $ = this,
+            picker = getReference($),
+            _active = picker._active,
+            _fix = picker._fix;
+        if (_fix) {
+            return focusTo(picker), offEventDefault(e);
+        }
+        if (!_active) {
+            return offEventDefault(e);
+        }
+        var key = e.key,
+            _mask = picker._mask,
+            max = picker.max,
+            min = picker.min,
+            state = picker.state,
+            step = picker.step,
+            _step = _mask._step,
+            up = _step.up,
+            strict = state.strict,
+            exit;
+        if (KEY_ARROW_LEFT === key) {
+            exit = true;
+            focusTo(picker);
+        } else if (KEY_ARROW_UP === key) {
+            exit = true;
+            focusTo(up), cycleValue.call(up, picker, step, strict && function () {
+                picker.value = max;
+            });
+        } else if (KEY_ARROW_DOWN === key || KEY_ENTER === key || ' ' === key) {
+            exit = true;
+            cycleValue.call($, picker, -step, strict && function () {
+                picker.value = min;
+            });
+        }
+        exit && offEventDefault(e);
+    }
+
+    function onKeyDownStepUp(e) {
+        var $ = this,
+            picker = getReference($),
+            _active = picker._active,
+            _fix = picker._fix;
+        if (_fix) {
+            return focusTo(picker), offEventDefault(e);
+        }
+        if (!_active) {
+            return offEventDefault(e);
+        }
+        var key = e.key,
+            _mask = picker._mask,
+            max = picker.max,
+            min = picker.min,
+            state = picker.state,
+            step = picker.step,
+            _step = _mask._step,
+            down = _step.down,
+            strict = state.strict,
+            exit;
+        if (KEY_ARROW_LEFT === key) {
+            exit = true;
+            focusTo(picker);
+        } else if (KEY_ARROW_DOWN === key) {
+            exit = true;
+            focusTo(down), cycleValue.call(down, picker, -step, strict && function () {
+                picker.value = min;
+            });
+        } else if (KEY_ARROW_UP === key || KEY_ENTER === key || ' ' === key) {
+            exit = true;
+            cycleValue.call($, picker, step, strict && function () {
+                picker.value = max;
+            });
+        }
+        exit && offEventDefault(e);
+    }
+
     function onKeyDownTextInput(e) {
         var $ = this,
-            exit,
-            key = e.key,
+            picker = getReference($),
+            _active = picker._active,
+            _fix = picker._fix;
+        if (_fix) {
+            return focusTo(picker), offEventDefault(e);
+        }
+        if (!_active) {
+            return offEventDefault(e);
+        }
+        var key = e.key,
             keyIsAlt = e.altKey,
             keyIsCtrl = e.ctrlKey,
             keyIsShift = e.shiftKey,
-            picker = getReference($),
-            step = picker.step;
+            _mask = picker._mask,
+            self = picker.self;
+        picker.step;
+        var _step = _mask._step,
+            down = _step.down,
+            up = _step.up,
+            exit,
+            form,
+            submit;
         if (keyIsAlt);
         else if (keyIsCtrl);
         else if (keyIsShift) {
@@ -1006,12 +1108,17 @@
             }
         } else if (KEY_ARROW_DOWN === key || KEY_PAGE_DOWN === key) {
             exit = true;
-            cycleValue.call($, picker, -step);
+            selectToNone(), focusTo(down), onKeyDownStepDown.call(down, e);
         } else if (KEY_ARROW_UP === key || KEY_PAGE_UP === key) {
             exit = true;
-            cycleValue.call($, picker, step);
+            selectToNone(), focusTo(up), onKeyDownStepUp.call(up, e);
         } else if (KEY_ENTER === key) {
             exit = true;
+            if ((form = getParentForm(self)) && isFunction(form.requestSubmit)) {
+                // <https://developer.mozilla.org/en-US/docs/Glossary/Submit_button>
+                submit = getElement('button:not([type]),button[type=submit],input[type=image],input[type=submit]', form);
+                submit ? form.requestSubmit(submit) : form.requestSubmit();
+            }
         } else if (KEY_TAB === key) {
             selectToNone();
         }
@@ -1066,11 +1173,13 @@
             min = picker.min,
             state = picker.state,
             step = picker.step,
-            strict = state.strict;
+            strict = state.strict,
+            time = state.time,
+            repeat = time.repeat;
         cycleValue.call($, picker, -step, strict && function () {
             picker.value = min, focusTo($);
         });
-        repeatStart.call($, 500, 50, picker, -step);
+        repeatStart.call($, repeat[0], repeat[1], picker, -step);
     }
 
     function onPointerDownStepUp(e) {
@@ -1080,11 +1189,13 @@
             max = picker.max,
             state = picker.state,
             step = picker.step,
-            strict = state.strict;
+            strict = state.strict,
+            time = state.time,
+            repeat = time.repeat;
         cycleValue.call($, picker, step, strict && function () {
             picker.value = max, focusTo($);
         });
-        repeatStart.call($, 500, 50, picker, step);
+        repeatStart.call($, repeat[0], repeat[1], picker, step);
     }
 
     function onPointerUpRoot() {
@@ -1191,52 +1302,43 @@
         max: {
             get: function get() {
                 var _this$state = this.state,
-                    max = _this$state.max;
-                _this$state.min;
-                var step = _this$state.step;
+                    max = _this$state.max,
+                    step = _this$state.step;
                 step = step != null ? step : 1;
                 return Infinity === (max = +max) || isNumber(max) && 0 === max % step ? max : Infinity;
             },
             set: function set(value) {
                 var $ = this,
-                    state = $.state;
-                state.min;
-                var step = state.step;
+                    state = $.state,
+                    step = state.step;
                 step = step != null ? step : 1;
                 return state.max = isNumber(value = +value) && 0 === value % step ? value : Infinity, $;
             }
         },
         min: {
             get: function get() {
-                var _this$state2 = this.state;
-                _this$state2.max;
-                var min = _this$state2.min,
+                var _this$state2 = this.state,
+                    min = _this$state2.min,
                     step = _this$state2.step;
                 step = step != null ? step : 1;
                 return -Infinity === (min = +min) || isNumber(min) && 0 === min % step ? min : -Infinity;
             },
             set: function set(value) {
                 var $ = this,
-                    state = $.state;
-                state.max;
-                var step = state.step;
+                    state = $.state,
+                    step = state.step;
                 step = step != null ? step : 1;
                 return state.min = isNumber(value = +value) && 0 === value % step ? value : -Infinity, $;
             }
         },
         step: {
             get: function get() {
-                var _this$state3 = this.state;
-                _this$state3.max;
-                _this$state3.min;
-                var step = _this$state3.step;
+                var step = this.state.step;
                 return isNumber(step = +step) && step > 0 ? step : 1;
             },
             set: function set(value) {
                 var $ = this,
                     state = $.state;
-                state.max;
-                state.min;
                 return state.step = isNumber(value = +value) && value > 0 ? value : 1, $;
             }
         },
@@ -1276,7 +1378,9 @@
                     state = $.state,
                     step = $.step,
                     input = _mask.input,
-                    strict = state.strict;
+                    strict = state.strict,
+                    time = state.time,
+                    error = time.error;
                 setText(input, v), toggleHintByValue($, v);
                 if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
                     setError($);
@@ -1290,7 +1394,7 @@
                         $.fire('min.number', [value, min]);
                     }
                     if (strict) {
-                        return setText(input, ""), $;
+                        return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, $.value), $;
                     }
                 } else {
                     letError(0, $);
@@ -1308,7 +1412,6 @@
     });
     NumberPicker._ = setObjectMethods(NumberPicker, {
         attach: function attach(self, state) {
-            var _ref, _ref2, _ref3;
             var $ = this;
             self = self || $.self;
             state = state || $.state;
@@ -1401,6 +1504,8 @@
             onEvent(EVENT_FOCUS, stepUp, onFocusStepUp);
             onEvent(EVENT_FOCUS, textInput, onFocusTextInput);
             onEvent(EVENT_INPUT, textInput, onInputTextInput);
+            onEvent(EVENT_KEY_DOWN, stepDown, onKeyDownStepDown);
+            onEvent(EVENT_KEY_DOWN, stepUp, onKeyDownStepUp);
             onEvent(EVENT_KEY_DOWN, textInput, onKeyDownTextInput);
             onEvent(EVENT_MOUSE_DOWN, stepDown, onPointerDownStepDown);
             onEvent(EVENT_MOUSE_DOWN, stepUp, onPointerDownStepUp);
@@ -1444,9 +1549,9 @@
                 step: stepFlex
             };
             // Re-assign some state value(s) using the setter to either normalize or reject the initial value
-            $.max = max = (_ref = theInputMax != null ? theInputMax : max) != null ? _ref : Infinity;
-            $.min = min = (_ref2 = theInputMin != null ? theInputMin : min) != null ? _ref2 : -Infinity;
-            $.step = step = (_ref3 = theInputStep != null ? theInputStep : step) != null ? _ref3 : 1;
+            $.max = max = "" !== theInputMax ? theInputMax : max != null ? max : Infinity;
+            $.min = min = "" !== theInputMin ? theInputMin : min != null ? min : -Infinity;
+            $.step = step = "" !== theInputStep ? theInputStep : step != null ? step : 1;
             var _active = $._active;
             // Force the `this._active` value to `true` to set the initial value
             $._active = true;
@@ -1510,10 +1615,12 @@
             offEvent(EVENT_FOCUS, self, onFocusSelf);
             offEvent(EVENT_FOCUS, up, onFocusStepUp);
             offEvent(EVENT_INVALID, self, onInvalidSelf);
+            offEvent(EVENT_KEY_DOWN, down, onKeyDownStepDown);
             offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
-            offEvent(EVENT_PASTE, input, onPasteTextInput);
+            offEvent(EVENT_KEY_DOWN, up, onKeyDownStepUp);
             offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
             offEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
+            offEvent(EVENT_PASTE, input, onPasteTextInput);
             offEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
             offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
             offEvent(EVENT_WHEEL, mask, onWheelMask);
