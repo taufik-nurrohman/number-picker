@@ -30,7 +30,7 @@ $name: 'number-picker';
 
 .#{$name} {
   border: 1px solid;
-  cursor: pointer;
+  cursor: text;
   display: inline-flex;
   flex-direction: column;
   flex-wrap: wrap;
@@ -84,6 +84,7 @@ $name: 'number-picker';
     gap: 1px;
     &-down,
     &-up {
+      cursor: pointer;
       flex: 1;
       &:focus {
         outline: 1px solid;
@@ -117,7 +118,6 @@ $name: 'number-picker';
   }
   &__text {
     border-color: transparent;
-    cursor: text;
     flex: 1;
     span {
       flex: 1;

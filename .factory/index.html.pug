@@ -37,20 +37,17 @@ block style
     |   gap: 2px;
     |   padding: 2px;
     | }
-    | .number-picker__step {
-    |   gap: 6px;
-    | }
     | .number-picker__step-down,
     | .number-picker__step-up,
     | .number-picker__text {
     |   border-width: 0;
     |   padding: 0 0.5em;
     | }
-    | .number-picker__step-down {
-    |   align-items: start;
+    | .number-picker__step-down::after {
+    |   margin-bottom: 4px;
     | }
-    | .number-picker__step-up {
-    |   align-items: end;
+    | .number-picker__step-up::after {
+    |   margin-top: 4px;
     | }
     | .number-picker__step-down:focus,
     | .number-picker__step-up:focus {
