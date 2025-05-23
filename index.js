@@ -947,9 +947,16 @@
     function onCutTextInput(e) {
         var $ = this,
             picker = getReference($),
-            self = picker.self;
+            mask = picker.mask,
+            self = picker.self,
+            v;
         toggleHint(1, picker), delay(function () {
-            return setValue(self, getText($));
+            setValue(self, v = getText($));
+            if (v && '-' !== v && '.' !== v) {
+                setAria(mask, 'valuenow', v);
+            } else {
+                letAria(mask, 'valuenow');
+            }
         })[0](1);
     }
     // Focus on the “visually hidden” self will move its focus to the mask, maintains the natural flow of the tab(s)!
@@ -996,6 +1003,7 @@
         }
         var inputType = e.inputType,
             _mask = picker._mask,
+            mask = picker.mask,
             max = picker.max,
             min = picker.min,
             self = picker.self,
@@ -1031,6 +1039,11 @@
         } else {
             letError(0, picker);
             picker.fire('is.number', [value]);
+        }
+        if (v && '-' !== v && '.' !== v) {
+            setAria(mask, 'valuenow', v);
+        } else {
+            letAria(mask, 'valuenow');
         }
         setValue(self, v), picker.fire('change', ["" !== v ? v : null]);
     }
@@ -1171,8 +1184,19 @@
     function onPasteTextInput(e) {
         offEventDefault(e);
         var $ = this,
-            picker = getReference($);
+            picker = getReference($),
+            mask = picker.mask,
+            self = picker.self,
+            v;
         setValuePicker(1, picker), insertAtSelection($, e.clipboardData.getData('text/plain'));
+        delay(function () {
+            setValue(self, v = getText($));
+            if (v && '-' !== v && '.' !== v) {
+                setAria(mask, 'valuenow', v);
+            } else {
+                letAria(mask, 'valuenow');
+            }
+        })[0](1);
     }
 
     function onPointerDownMask(e) {

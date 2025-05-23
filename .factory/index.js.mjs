@@ -170,8 +170,15 @@ function onBlurTextInput() {
 function onCutTextInput(e) {
     let $ = this,
         picker = getReference($),
-        {self} = picker;
-    toggleHint(1, picker), delay(() => setValue(self, getText($)))[0](1);
+        {mask, self} = picker, v;
+    toggleHint(1, picker), delay(() => {
+        setValue(self, v = getText($));
+        if (v && '-' !== v && '.' !== v) {
+            setAria(mask, 'valuenow', v);
+        } else {
+            letAria(mask, 'valuenow');
+        }
+    })[0](1);
 }
 
 // Focus on the “visually hidden” self will move its focus to the mask, maintains the natural flow of the tab(s)!
@@ -212,7 +219,7 @@ function onInputTextInput(e) {
         return offEventDefault(e);
     }
     let {inputType} = e,
-        {_mask, max, min, self, state, step} = picker,
+        {_mask, mask, max, min, self, state, step} = picker,
         {input} = _mask,
         {strict, time} = state,
         {error} = time, v,
@@ -241,6 +248,11 @@ function onInputTextInput(e) {
     } else {
         letError(0, picker);
         picker.fire('is.number', [value]);
+    }
+    if (v && '-' !== v && '.' !== v) {
+        setAria(mask, 'valuenow', v);
+    } else {
+        letAria(mask, 'valuenow');
     }
     setValue(self, v), picker.fire('change', ["" !== v ? v : null]);
 }
@@ -360,8 +372,17 @@ function onKeyDownTextInput(e) {
 function onPasteTextInput(e) {
     offEventDefault(e);
     let $ = this,
-        picker = getReference($);
+        picker = getReference($),
+        {mask, self} = picker, v;
     setValuePicker(1, picker), insertAtSelection($, e.clipboardData.getData('text/plain'));
+    delay(() => {
+        setValue(self, v = getText($));
+        if (v && '-' !== v && '.' !== v) {
+            setAria(mask, 'valuenow', v);
+        } else {
+            letAria(mask, 'valuenow');
+        }
+    })[0](1);
 }
 
 function onPointerDownMask(e) {
