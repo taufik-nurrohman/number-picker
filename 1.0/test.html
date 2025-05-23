@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width" name="viewport">
+    <meta content="Accessible custom `&lt;input type=&quot;number&quot;&gt;` element." name="description">
+    <title>Number Picker</title>
+    <link href="index.min.css" rel="stylesheet">
+    <style>
+      .number-picker__text {
+        min-width: 1.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p><input type="number"></p>
+    </main>
+    <script src="index.min.js"></script>
+    <script>
+      const picker = new NumberPicker(document.querySelector('input'));
+    </script>
+  </body>
+</html>

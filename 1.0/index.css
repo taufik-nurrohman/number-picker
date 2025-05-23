@@ -1,0 +1,140 @@
+.number-picker__step-down,
+.number-picker__step-up,
+.number-picker__text {
+  align-items: center;
+  border: 1px solid;
+  border-color: inherit;
+  display: flex;
+  gap: 0.25em;
+  padding: 0 0.25em;
+}
+
+.number-picker__flex {
+  border-color: inherit;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding: 1px;
+}
+
+.number-picker,
+.number-picker * {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  box-sizing: border-box;
+  color: inherit;
+  font: inherit;
+  outline: 0;
+}
+
+.number-picker {
+  border: 1px solid;
+  cursor: text;
+  display: inline-flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  position: relative;
+  user-select: none;
+  vertical-align: middle;
+}
+.number-picker[aria-disabled=true] {
+  color: rgb(128, 128, 128);
+  cursor: not-allowed;
+}
+.number-picker[aria-disabled=true] * {
+  pointer-events: none;
+}
+.number-picker[aria-invalid=true] {
+  color: rgb(255, 0, 0);
+}
+.number-picker__step-down,
+.number-picker__step-up,
+.number-picker__text {
+  overflow: hidden;
+  position: relative;
+}
+.number-picker__flex {
+  flex: 1;
+  overflow: hidden;
+}
+.number-picker__self {
+  background: 0 0;
+  border-radius: 0;
+  border: 0;
+  bottom: 0;
+  box-shadow: none;
+  color: transparent;
+  font: 0/0 a;
+  height: 1px;
+  left: 0;
+  margin: 0;
+  opacity: 0;
+  outline: 0;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  text-shadow: none;
+  width: 1px;
+}
+.number-picker__step {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.number-picker__step-down,
+.number-picker__step-up {
+  cursor: pointer;
+  flex: 1;
+}
+.number-picker__step-down:focus,
+.number-picker__step-up:focus {
+  outline: 1px solid;
+  outline-offset: -2px;
+}
+.number-picker__step-down::after,
+.number-picker__step-up::after {
+  border: 0 solid transparent;
+  border-width: 0 0.25em;
+  content: "";
+  display: block;
+  height: 0;
+  width: 0;
+}
+.number-picker__step-down::after {
+  border-top-color: inherit;
+  border-top-width: 0.25em;
+}
+.number-picker__step-up::after {
+  border-bottom-color: inherit;
+  border-bottom-width: 0.25em;
+}
+.number-picker__text {
+  border-color: transparent;
+  flex: 1;
+}
+.number-picker__text span {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+.number-picker__text span::after {
+  content: "‌";
+}
+.number-picker__text span * {
+  display: inline;
+}
+.number-picker__text span br {
+  display: none;
+}
+.number-picker__text span + span {
+  align-items: center;
+  bottom: 0;
+  display: flex;
+  left: 0;
+  opacity: 0.5;
+  padding: inherit;
+  position: absolute;
+  right: 0;
+  top: 0;
+  white-space: nowrap;
+  z-index: 0;
+}
