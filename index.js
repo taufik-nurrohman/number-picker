@@ -844,15 +844,14 @@
     };
     var name = 'NumberPicker';
     var _repeat = repeat(function (picker, step) {
-            cycleValue.call(this, picker, step, repeatStop);
+            cycleValue(this, picker, step, repeatStop);
         }),
         _repeat2 = _maybeArrayLike(_slicedToArray, _repeat, 2),
         repeatStart = _repeat2[0],
         repeatStop = _repeat2[1];
 
-    function cycleValue(picker, step, onStop, onStep) {
-        var $ = this,
-            _active = picker._active,
+    function cycleValue($, picker, step, onStop, onStep) {
+        var _active = picker._active,
             _fix = picker._fix;
         if (_fix) {
             return focusTo(picker);
@@ -866,7 +865,7 @@
             state = picker.state,
             value = picker.value,
             strict = state.strict;
-        value = +(value != null ? value : 0) + step;
+        value = Math.round(+(value != null ? value : 0) / step) * step + step;
         if (!isNumber(value)) {
             if (strict) {
                 return setError(picker), focusTo($), selectTo($);
@@ -883,7 +882,7 @@
             letError(0, picker);
         }
         setAria(mask, 'valuenow', value);
-        picker.value = value, focusTo($), selectTo($), onStep && onStep(picker);
+        picker.value = value, focusTo($), selectTo($);
     }
 
     function focusTo(node) {
@@ -1034,12 +1033,12 @@
             focusTo(picker);
         } else if (KEY_ARROW_UP === key) {
             exit = true;
-            focusTo(up), cycleValue.call(up, picker, step, strict && function () {
+            focusTo(up), cycleValue(up, picker, step, strict && function () {
                 picker.value = max;
             });
         } else if (KEY_ARROW_DOWN === key || KEY_ENTER === key || ' ' === key) {
             exit = true;
-            cycleValue.call($, picker, -step, strict && function () {
+            cycleValue($, picker, -step, strict && function () {
                 picker.value = min;
             });
         }
@@ -1072,12 +1071,12 @@
             focusTo(picker);
         } else if (KEY_ARROW_DOWN === key) {
             exit = true;
-            focusTo(down), cycleValue.call(down, picker, -step, strict && function () {
+            focusTo(down), cycleValue(down, picker, -step, strict && function () {
                 picker.value = min;
             });
         } else if (KEY_ARROW_UP === key || KEY_ENTER === key || ' ' === key) {
             exit = true;
-            cycleValue.call($, picker, step, strict && function () {
+            cycleValue($, picker, step, strict && function () {
                 picker.value = max;
             });
         }
@@ -1184,7 +1183,7 @@
             strict = state.strict,
             time = state.time,
             repeat = time.repeat;
-        cycleValue.call($, picker, -step, strict && function () {
+        cycleValue($, picker, -step, strict && function () {
             picker.value = min, focusTo($);
         });
         repeatStart.call($, repeat[0], repeat[1], picker, -step);
@@ -1200,7 +1199,7 @@
             strict = state.strict,
             time = state.time,
             repeat = time.repeat;
-        cycleValue.call($, picker, step, strict && function () {
+        cycleValue($, picker, step, strict && function () {
             picker.value = max, focusTo($);
         });
         repeatStart.call($, repeat[0], repeat[1], picker, step);
@@ -1247,12 +1246,12 @@
             deltaY = e.deltaY;
         // Wheel up
         if (deltaY < 0) {
-            cycleValue.call(up, picker, step, strict && function () {
+            cycleValue(up, picker, step, strict && function () {
                 picker.value = max, focusTo(up);
             });
             // Wheel down
         } else {
-            cycleValue.call(down, picker, -step, strict && function () {
+            cycleValue(down, picker, -step, strict && function () {
                 picker.value = min, focusTo(down);
             });
         }

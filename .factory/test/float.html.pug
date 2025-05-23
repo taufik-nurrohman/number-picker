@@ -1,8 +1,8 @@
-extends _index.pug
+extends ../_index.pug
 
 block state
-  - const scripts = ['index.min.js']
-  - const styles = ['index.min.css']
+  - const scripts = ['../index.min.js']
+  - const styles = ['../index.min.css']
   - const title = 'Number Picker'
 
 block script
@@ -17,4 +17,4 @@ block style
 
 block content
   main
-    p: input(type='number')
+    p: input(step='0.5' type='number')

@@ -77,12 +77,11 @@ const toggleHintByValue = function (picker, value) {
 const name = 'NumberPicker';
 
 const [repeatStart, repeatStop] = repeat(function (picker, step) {
-    cycleValue.call(this, picker, step, repeatStop);
+    cycleValue(this, picker, step, repeatStop);
 });
 
-function cycleValue(picker, step, onStop, onStep) {
-    let $ = this,
-        {_active, _fix} = picker;
+function cycleValue($, picker, step, onStop, onStep) {
+    let {_active, _fix} = picker;
     if (_fix) {
         return focusTo(picker);
     }
@@ -91,7 +90,7 @@ function cycleValue(picker, step, onStop, onStep) {
     }
     let {mask, max, min, state, value} = picker,
         {strict} = state;
-    value = (+(value ?? 0)) + step;
+    value = (Math.round(+(value ?? 0) / step) * step) + step;
     if (!isNumber(value)) {
         if (strict) {
             return setError(picker), focusTo($), selectTo($);
@@ -239,12 +238,12 @@ function onKeyDownStepDown(e) {
         focusTo(picker);
     } else if (KEY_ARROW_UP === key) {
         exit = true;
-        focusTo(up), cycleValue.call(up, picker, step, strict && function () {
+        focusTo(up), cycleValue(up, picker, step, strict && function () {
             picker.value = max;
         });
     } else if (KEY_ARROW_DOWN === key || KEY_ENTER === key || ' ' === key) {
         exit = true;
-        cycleValue.call($, picker, -step, strict && function () {
+        cycleValue($, picker, -step, strict && function () {
             picker.value = min;
         });
     }
@@ -271,12 +270,12 @@ function onKeyDownStepUp(e) {
         focusTo(picker);
     } else if (KEY_ARROW_DOWN === key) {
         exit = true;
-        focusTo(down), cycleValue.call(down, picker, -step, strict && function () {
+        focusTo(down), cycleValue(down, picker, -step, strict && function () {
             picker.value = min;
         });
     } else if (KEY_ARROW_UP === key || KEY_ENTER === key || ' ' === key) {
         exit = true;
-        cycleValue.call($, picker, step, strict && function () {
+        cycleValue($, picker, step, strict && function () {
             picker.value = max;
         });
     }
@@ -369,7 +368,7 @@ function onPointerDownStepDown(e) {
         {min, state, step} = picker,
         {strict, time} = state,
         {repeat} = time;
-    cycleValue.call($, picker, -step, strict && function () {
+    cycleValue($, picker, -step, strict && function () {
         (picker.value = min), focusTo($);
     });
     repeatStart.call($, repeat[0], repeat[1], picker, -step);
@@ -382,7 +381,7 @@ function onPointerDownStepUp(e) {
         {max, state, step} = picker,
         {strict, time} = state,
         {repeat} = time;
-    cycleValue.call($, picker, step, strict && function () {
+    cycleValue($, picker, step, strict && function () {
         (picker.value = max), focusTo($);
     });
     repeatStart.call($, repeat[0], repeat[1], picker, step);
@@ -421,12 +420,12 @@ function onWheelMask(e) {
         {deltaY} = e;
     // Wheel up
     if (deltaY < 0) {
-        cycleValue.call(up, picker, step, strict && function () {
+        cycleValue(up, picker, step, strict && function () {
             (picker.value = max), focusTo(up);
         });
     // Wheel down
     } else {
-        cycleValue.call(down, picker, -step, strict && function () {
+        cycleValue(down, picker, -step, strict && function () {
             (picker.value = min), focusTo(down);
         });
     }
