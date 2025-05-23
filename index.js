@@ -1167,9 +1167,8 @@
             keyIsCtrl = e.ctrlKey,
             keyIsShift = e.shiftKey,
             _mask = picker._mask,
-            self = picker.self;
-        picker.step;
-        var _step = _mask._step,
+            self = picker.self,
+            _step = _mask._step,
             down = _step.down,
             up = _step.up,
             exit,
@@ -1490,8 +1489,9 @@
             set: function set(value) {
                 var $ = this,
                     _active = $._active,
+                    _fix = $._fix,
                     v;
-                if (!_active) {
+                if (!_active && !_fix) {
                     return $;
                 }
                 value = +(v = (value != null ? value : "") + "");
@@ -1695,6 +1695,7 @@
             var _active = $._active;
             // Force the `this._active` value to `true` to set the initial value
             $._active = true;
+            theInputValue && ($[TOKEN_VALUE] = $['_' + TOKEN_VALUE] = theInputValue);
             // After the initial value has been set, restore the previous `this._active` value
             $._active = _active;
             // Force `id` attribute(s)
@@ -1710,7 +1711,6 @@
             setID(textInputHint);
             theInputID && setDatum(mask, 'id', theInputID);
             theInputName && setDatum(mask, 'name', theInputName);
-            theInputValue && ($[TOKEN_VALUE] = $['_' + TOKEN_VALUE] = theInputValue);
             // Attach extension(s)
             if (isSet(state) && isArray(state.with)) {
                 forEachArray(state.with, function (v, k) {
@@ -1809,8 +1809,9 @@
         },
         reset: function reset(focus, mode) {
             var $ = this,
-                _active = $._active;
-            if (!_active) {
+                _active = $._active,
+                _fix = $._fix;
+            if (!_active && !_fix) {
                 return $;
             }
             $[TOKEN_VALUE] = $['_' + TOKEN_VALUE];

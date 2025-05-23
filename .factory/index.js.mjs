@@ -362,7 +362,7 @@ function onKeyDownTextInput(e) {
         keyIsAlt = e.altKey,
         keyIsCtrl = e.ctrlKey,
         keyIsShift = e.shiftKey,
-        {_mask, self, step} = picker,
+        {_mask, self} = picker,
         {_step} = _mask,
         {down, up} = _step, exit, form, submit;
     if (keyIsAlt) {} else if (keyIsCtrl) {} else if (keyIsShift) {
@@ -656,8 +656,8 @@ setObjectAttributes(NumberPicker, {
         },
         set: function (value) {
             let $ = this,
-                {_active} = $, v;
-            if (!_active) {
+                {_active, _fix} = $, v;
+            if (!_active && !_fix) {
                 return $;
             }
             value = +(v = (value ?? "") + "");
@@ -850,6 +850,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         let {_active} = $;
         // Force the `this._active` value to `true` to set the initial value
         $._active = true;
+        theInputValue && ($[TOKEN_VALUE] = $['_' + TOKEN_VALUE] = theInputValue);
         // After the initial value has been set, restore the previous `this._active` value
         $._active = _active;
         // Force `id` attribute(s)
@@ -865,7 +866,6 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         setID(textInputHint);
         theInputID && setDatum(mask, 'id', theInputID);
         theInputName && setDatum(mask, 'name', theInputName);
-        theInputValue && ($[TOKEN_VALUE] = $['_' + TOKEN_VALUE] = theInputValue);
         // Attach extension(s)
         if (isSet(state) && isArray(state.with)) {
             forEachArray(state.with, (v, k) => {
@@ -956,8 +956,8 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
     },
     reset: function (focus, mode) {
         let $ = this,
-            {_active} = $;
-        if (!_active) {
+            {_active, _fix} = $;
+        if (!_active && !_fix) {
             return $;
         }
         $[TOKEN_VALUE] = $['_' + TOKEN_VALUE];
