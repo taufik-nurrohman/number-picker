@@ -1,0 +1,21 @@
+extends ../_index.pug
+
+block state
+  - const scripts = ['../index.min.js']
+  - const styles = ['../index.min.css']
+  - const title = 'Number Picker'
+
+block script
+  script
+    | const picker = new NumberPicker(document.querySelector('input'));
+
+block style
+  style
+    | .number-picker__text {
+    |   min-width: 3em;
+    | }
+
+block content
+  main
+    p: input(autofocus id='test' type='number' value='1')
+    p #[label(for='test' style={'text-decoration': 'underline'}) Click here] to focus to the number picker!
