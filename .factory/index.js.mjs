@@ -302,6 +302,7 @@ function onKeyDownStepDown(e) {
         cycleValue($, picker, -step, strict && function (picker) {
             picker[TOKEN_VALUE] = min;
         });
+    } else if (KEY_TAB === key) {
     } else {
         if (!keyIsAlt && !keyIsCtrl) {
             focusTo(picker);
@@ -340,6 +341,7 @@ function onKeyDownStepUp(e) {
         cycleValue($, picker, step, strict && function (picker) {
             picker[TOKEN_VALUE] = max;
         });
+    } else if (KEY_TAB === key) {
     } else {
         if (!keyIsAlt && !keyIsCtrl) {
             focusTo(picker);
@@ -351,12 +353,9 @@ function onKeyDownStepUp(e) {
 function onKeyDownTextInput(e) {
     let $ = this,
         picker = getReference($),
-        {_active, _fix} = picker;
-    if (_fix) {
-        return focusTo(picker), offEventDefault(e);
-    }
+        {_active} = picker;
     if (!_active) {
-        return offEventDefault(e);
+        return;
     }
     let key = e.key,
         keyIsAlt = e.altKey,
@@ -408,7 +407,10 @@ function onPointerDownMask(e) {
     offEventDefault(e);
     let $ = this,
         picker = getReference($),
-        {_active} = picker;
+        {_active, _fix} = picker;
+    if (_fix) {
+        return focusTo(picker);
+    }
     if (!_active) {
         return;
     }
@@ -447,6 +449,8 @@ function onPointerDownStepDown(e) {
         (picker[TOKEN_VALUE] = min), focusTo($);
     });
     repeatStart.call($, repeat[0], repeat[1], picker, -step);
+    onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
+    onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
 }
 
 function onPointerDownStepUp(e) {
@@ -460,9 +464,14 @@ function onPointerDownStepUp(e) {
         (picker[TOKEN_VALUE] = max), focusTo($);
     });
     repeatStart.call($, repeat[0], repeat[1], picker, step);
+    onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
+    onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
 }
 
 function onPointerUpRoot() {
+    let $ = this;
+    offEvent(EVENT_MOUSE_UP, $, onPointerUpRoot);
+    offEvent(EVENT_TOUCH_END, $, onPointerUpRoot);
     repeatStop();
 }
 
@@ -825,8 +834,6 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         onEvent(EVENT_FOCUS, self, onFocusSelf);
         onEvent(EVENT_INVALID, self, onInvalidSelf);
         onEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
-        onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
-        onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
         onEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
         self[TOKEN_TAB_INDEX] = -1;
         setReference(mask, $);
@@ -917,9 +924,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
         offEvent(EVENT_KEY_DOWN, up, onKeyDownStepUp);
         offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
-        offEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
         offEvent(EVENT_PASTE, input, onPasteTextInput);
-        offEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
         offEvent(EVENT_TOUCH_START, mask, onPointerDownMask);
         offEvent(EVENT_WHEEL, mask, onWheelMask);
         // Detach extension(s)
