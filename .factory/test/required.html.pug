@@ -1,0 +1,38 @@
+extends ../_index.pug
+
+block state
+  - const scripts = ['../index.min.js']
+  - const styles = ['../index.min.css']
+  - const title = 'Number Picker'
+
+block script
+  script
+    | const picker = new NumberPicker(document.querySelector('input'));
+    |
+    | picker.self.form.addEventListener('reset', function () {
+    |     setTimeout(() => picker.vital = document.querySelector('input[type=checkbox]').checked, 1);
+    | });
+    |
+    | picker.vital = document.querySelector('input[type=checkbox]').checked;
+
+block style
+  style
+    | .number-picker__text {
+    |   min-width: 3em;
+    | }
+
+block content
+  main
+    form(method='get' target='_blank')
+      p: input(required name='test' type='number' value='1')
+      p
+        label
+          input(checked onchange='picker.vital = this.checked;' type='checkbox')
+          = ' '
+          span Required
+      p
+        button(type='submit') Submit
+        = ' '
+        button(type='reset') Reset
+        = ' '
+        button(onclick='picker.value = 25, picker.focus();' type='button') Set Value to &ldquo;25&rdquo;

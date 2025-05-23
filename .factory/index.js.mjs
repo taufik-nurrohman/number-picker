@@ -1,11 +1,13 @@
 import {/* focusTo, */insertAtSelection, selectTo, selectToNone} from '@taufik-nurrohman/selection';
-import {R, getElement, getID, getParent, getParentForm, getText, getValue, isDisabled, isReadOnly, isRequired, letAria, letClass, letElement, letStyle, setAria, setChildLast, setClass, setDatum, setElement, setID, setNext, setStyle, setText, setValue} from '@taufik-nurrohman/document';
+import {R, getElement, getID, getParent, getParentForm, getText, getValue, isDisabled, isReadOnly, isRequired, letAria, letAttribute, letClass, letElement, letStyle, setAria, setAttribute, setChildLast, setClass, setDatum, setElement, setID, setNext, setStyle, setText, setValue} from '@taufik-nurrohman/document';
 import {delay, repeat} from '@taufik-nurrohman/tick';
 import {forEachArray, getReference, setObjectAttributes, setObjectMethods, setReference} from '@taufik-nurrohman/f';
 import {fromStates, fromValue} from '@taufik-nurrohman/from';
+import {hasValue} from '@taufik-nurrohman/has';
 import {hook} from '@taufik-nurrohman/hook';
-import {isArray, isFunction, isInstance, isInteger, isNumber, isObject, isSet, isString} from '@taufik-nurrohman/is';
+import {isArray, isBoolean, isFunction, isInstance, isInteger, isNumber, isObject, isSet, isString} from '@taufik-nurrohman/is';
 import {offEvent, offEventDefault, onEvent} from '@taufik-nurrohman/event';
+import {toCount} from '@taufik-nurrohman/to';
 
 const EVENT_DOWN = 'down';
 const EVENT_UP = 'up';
@@ -14,6 +16,7 @@ const EVENT_BLUR = 'blur';
 const EVENT_CUT = 'cut';
 const EVENT_FOCUS = 'focus';
 const EVENT_INPUT = 'input';
+const EVENT_INPUT_START = 'before' + EVENT_INPUT;
 const EVENT_INVALID = 'invalid';
 const EVENT_KEY = 'key';
 const EVENT_KEY_DOWN = EVENT_KEY + EVENT_DOWN;
@@ -32,6 +35,7 @@ const KEY_DOWN = 'Down';
 const KEY_LEFT = 'Left';
 const KEY_UP = 'Up';
 
+const KEY_A = 'a';
 const KEY_ARROW = 'Arrow';
 const KEY_ARROW_DOWN = KEY_ARROW + KEY_DOWN;
 const KEY_ARROW_LEFT = KEY_ARROW + KEY_LEFT;
@@ -42,10 +46,17 @@ const KEY_PAGE_DOWN = KEY_PAGE + KEY_DOWN;
 const KEY_PAGE_UP = KEY_PAGE + KEY_UP;
 const KEY_TAB = 'Tab';
 
+const TOKEN_CONTENTEDITABLE = 'contenteditable';
+const TOKEN_DISABLED = 'disabled';
 const TOKEN_FALSE = 'false';
 const TOKEN_INVALID = EVENT_INVALID;
+const TOKEN_READONLY = 'readonly';
+const TOKEN_READ_ONLY = 'readOnly';
+const TOKEN_REQUIRED = 'required';
+const TOKEN_TABINDEX = 'tabindex';
 const TOKEN_TAB_INDEX = 'tabIndex';
 const TOKEN_TRUE = 'true';
+const TOKEN_VALUE = 'value';
 const TOKEN_VISIBILITY = 'visibility';
 
 const [letError, letErrorAbort] = delay(function (picker) {
@@ -59,7 +70,7 @@ const setError = function (picker) {
 const [setValuePicker] = delay(function (picker) {
     let {_mask} = picker,
         {input} = _mask;
-    (picker.value = getText(input)) && selectTo(input);
+    (picker[TOKEN_VALUE] = getText(input)) && selectTo(input);
 });
 
 const [toggleHint] = delay(function (picker) {
@@ -90,12 +101,13 @@ function cycleValue($, picker, step, onStop, onStep) {
     }
     let {mask, max, min, state, value} = picker,
         {strict} = state;
+    // Snap number to the nearest step
     value = (Math.round(+(value ?? 0) / step) * step) + step;
     if (!isNumber(value)) {
         if (strict) {
             return setError(picker), focusTo($), selectTo($);
         }
-        picker.value = value = step < 0 ? min : max;
+        picker[TOKEN_VALUE] = value = step < 0 ? min : max;
         setAria(mask, 'valuenow', value);
     }
     if (value > max || value < min) {
@@ -106,12 +118,31 @@ function cycleValue($, picker, step, onStop, onStep) {
     } else {
         letError(0, picker);
     }
+    value += "";
+    // Ensure decimal part in number
+    if (!hasValue('.', value) && 0 !== (step % 1)) {
+        value += '.' + ('0'.repeat(toCount((step + '.').split('.')[1])));
+    }
     setAria(mask, 'valuenow', value);
-    (picker.value = value), focusTo($), selectTo($), (onStep && onStep(picker));
+    (picker[TOKEN_VALUE] = value), focusTo($), selectTo($), (onStep && onStep(picker));
 }
 
 function focusTo(node) {
     return node.focus(), node;
+}
+
+function onBeforeInputTextInput(e) {
+    let $ = this,
+        picker = getReference($),
+        {step} = picker,
+        {data, inputType} = e;
+    let characters = ['-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    if (0 !== (step % 1)) {
+        characters.push('.');
+    }
+    if ('insertText' === inputType && !hasValue(data, characters)) {
+        offEventDefault(e);
+    }
 }
 
 function onBlurStepDown() {
@@ -191,7 +222,9 @@ function onInputTextInput(e) {
     } else if ('insertText' === inputType) {
         toggleHintByValue(picker, 1);
     }
-    if (!isNumber(value) || 0 !== (value % step) || value > max || value < min) {
+    if ('-' === v || '.' === v) {
+        // About to type a negative or floating-point number…
+    } else if (!isNumber(value) || 0 !== (value % step) || value > max || value < min) {
         setError(picker);
         if (!isNumber(value)) {
             picker.fire('not.number', [v]);
@@ -203,7 +236,7 @@ function onInputTextInput(e) {
             picker.fire('min.number', [value, min]);
         }
         if (strict) {
-            return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, picker.value), focusTo(input), selectTo(input);
+            return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, picker[TOKEN_VALUE]), focusTo(input), selectTo(input, 1);
         }
     } else {
         letError(0, picker);
@@ -229,22 +262,23 @@ function onKeyDownStepDown(e) {
         return offEventDefault(e);
     }
     let key = e.key,
+        keyIsCtrl = e.ctrlKey,
         {_mask, max, min, state, step} = picker,
         {_step} = _mask,
         {up} = _step,
         {strict} = state, exit;
-    if (KEY_ARROW_LEFT === key) {
+    if (KEY_ARROW_LEFT === key || keyIsCtrl && KEY_A === key) {
         exit = true;
         focusTo(picker);
     } else if (KEY_ARROW_UP === key) {
         exit = true;
         focusTo(up), cycleValue(up, picker, step, strict && function () {
-            picker.value = max;
+            picker[TOKEN_VALUE] = max;
         });
     } else if (KEY_ARROW_DOWN === key || KEY_ENTER === key || ' ' === key) {
         exit = true;
         cycleValue($, picker, -step, strict && function () {
-            picker.value = min;
+            picker[TOKEN_VALUE] = min;
         });
     }
     exit && offEventDefault(e);
@@ -261,22 +295,23 @@ function onKeyDownStepUp(e) {
         return offEventDefault(e);
     }
     let key = e.key,
+        keyIsCtrl = e.ctrlKey,
         {_mask, max, min, state, step} = picker,
         {_step} = _mask,
         {down} = _step,
         {strict} = state, exit;
-    if (KEY_ARROW_LEFT === key) {
+    if (KEY_ARROW_LEFT === key || keyIsCtrl && KEY_A === key) {
         exit = true;
         focusTo(picker);
     } else if (KEY_ARROW_DOWN === key) {
         exit = true;
         focusTo(down), cycleValue(down, picker, -step, strict && function () {
-            picker.value = min;
+            picker[TOKEN_VALUE] = min;
         });
     } else if (KEY_ARROW_UP === key || KEY_ENTER === key || ' ' === key) {
         exit = true;
         cycleValue($, picker, step, strict && function () {
-            picker.value = max;
+            picker[TOKEN_VALUE] = max;
         });
     }
     exit && offEventDefault(e);
@@ -369,7 +404,7 @@ function onPointerDownStepDown(e) {
         {strict, time} = state,
         {repeat} = time;
     cycleValue($, picker, -step, strict && function () {
-        (picker.value = min), focusTo($);
+        (picker[TOKEN_VALUE] = min), focusTo($);
     });
     repeatStart.call($, repeat[0], repeat[1], picker, -step);
 }
@@ -382,7 +417,7 @@ function onPointerDownStepUp(e) {
         {strict, time} = state,
         {repeat} = time;
     cycleValue($, picker, step, strict && function () {
-        (picker.value = max), focusTo($);
+        (picker[TOKEN_VALUE] = max), focusTo($);
     });
     repeatStart.call($, repeat[0], repeat[1], picker, step);
 }
@@ -421,12 +456,12 @@ function onWheelMask(e) {
     // Wheel up
     if (deltaY < 0) {
         cycleValue(up, picker, step, strict && function () {
-            (picker.value = max), focusTo(up);
+            (picker[TOKEN_VALUE] = max), focusTo(up);
         });
     // Wheel down
     } else {
         cycleValue(down, picker, -step, strict && function () {
-            (picker.value = min), focusTo(down);
+            (picker[TOKEN_VALUE] = min), focusTo(down);
         });
     }
 }
@@ -441,7 +476,9 @@ function NumberPicker(self, state) {
         return new NumberPicker(self, state);
     }
     setReference(self, hook($, NumberPicker._));
-    return $.attach(self, fromStates({}, NumberPicker.state, state || {}));
+    return $.attach(self, fromStates({}, NumberPicker.state, isBoolean(state) ? {
+        strict: state
+    } : (state || {})));
 }
 
 NumberPicker.from = function (self, state) {
@@ -477,6 +514,20 @@ setObjectAttributes(NumberPicker, {
             return this._active;
         },
         set: function (value) {
+            let $ = this,
+                {_mask, mask, self} = $,
+                {input} = _mask,
+                v = !!value;
+            self[TOKEN_DISABLED] = !($._active = v);
+            if (v) {
+                letAria(input, TOKEN_DISABLED);
+                letAria(mask, TOKEN_DISABLED);
+                setAttribute(input, TOKEN_CONTENTEDITABLE, "");
+            } else {
+                letAttribute(input, TOKEN_CONTENTEDITABLE);
+                setAria(input, TOKEN_DISABLED, true);
+                setAria(mask, TOKEN_DISABLED, true);
+            }
             return $;
         }
     },
@@ -485,6 +536,23 @@ setObjectAttributes(NumberPicker, {
             return this._fix;
         },
         set: function (value) {
+            let $ = this,
+                {_mask, mask, self} = $,
+                {input} = _mask,
+                v = !!value;
+            $._active = !($._fix = self[TOKEN_READ_ONLY] = v);
+            if (v) {
+                letAttribute(input, TOKEN_CONTENTEDITABLE);
+                setAria(input, TOKEN_READONLY, true);
+                setAria(mask, TOKEN_READONLY, true);
+                setAttribute(input, TOKEN_TABINDEX, 0);
+            } else {
+                letAria(input, TOKEN_READONLY);
+                letAria(mask, TOKEN_READONLY);
+                letAttribute(input, TOKEN_TABINDEX);
+                setAttribute(input, TOKEN_CONTENTEDITABLE, "");
+            }
+            return $;
         }
     },
     max: {
@@ -570,7 +638,7 @@ setObjectAttributes(NumberPicker, {
                     $.fire('min.number', [value, min]);
                 }
                 if (strict) {
-                    return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, $.value), $;
+                    return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, $[TOKEN_VALUE]), $;
                 }
             } else {
                 letError(0, $);
@@ -584,6 +652,19 @@ setObjectAttributes(NumberPicker, {
             return this._vital;
         },
         set: function (value) {
+            let $ = this,
+                {_mask, mask, self} = $,
+                {input} = _mask,
+                v = !!value;
+            self[TOKEN_REQUIRED] = v;
+            if (v) {
+                setAria(input, TOKEN_REQUIRED, true);
+                setAria(mask, TOKEN_REQUIRED, true);
+            } else {
+                letAria(input, TOKEN_REQUIRED);
+                letAria(mask, TOKEN_REQUIRED);
+            }
+            return $;
         }
     }
 });
@@ -593,7 +674,6 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         let $ = this;
         self = self || $.self;
         state = state || $.state;
-        $._value = null;
         $.self = self;
         $.state = state;
         let {max, min, n, step} = state,
@@ -671,6 +751,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         setChildLast(stepFlex, stepUp);
         setChildLast(stepFlex, stepDown);
         onEvent(EVENT_BLUR, stepDown, onBlurStepDown);
+        onEvent(EVENT_INPUT_START, textInput, onBeforeInputTextInput);
         onEvent(EVENT_BLUR, stepUp, onBlurStepUp);
         onEvent(EVENT_BLUR, textInput, onBlurTextInput);
         onEvent(EVENT_CUT, textInput, onCutTextInput);
@@ -744,12 +825,12 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         setID(textInputHint);
         theInputID && setDatum(mask, 'id', theInputID);
         theInputName && setDatum(mask, 'name', theInputName);
-        theInputValue && ($.value = theInputValue);
+        theInputValue && ($[TOKEN_VALUE] = $['_' + TOKEN_VALUE] = theInputValue);
         // Attach extension(s)
         if (isSet(state) && isArray(state.with)) {
             forEachArray(state.with, (v, k) => {
                 if (isString(v)) {
-                    v = OptionPicker[v];
+                    v = NumberPicker[v];
                 }
                 // `const Extension = function (self, state = {}) {}`
                 if (isFunction(v)) {
@@ -763,6 +844,12 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         return $;
     },
     blur: function () {
+        selectToNone();
+        let $ = this,
+            {_mask, _step} = $,
+            {input} = _mask,
+            {down, up} = _step;
+        return down.blur(), input.blur(), up.blur(), $;
     },
     detach: function () {
         let $ = this,
@@ -784,6 +871,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         offEvent(EVENT_FOCUS, input, onFocusTextInput);
         offEvent(EVENT_FOCUS, self, onFocusSelf);
         offEvent(EVENT_FOCUS, up, onFocusStepUp);
+        offEvent(EVENT_INPUT_START, input, onBeforeInputTextInput);
         offEvent(EVENT_INVALID, self, onInvalidSelf);
         offEvent(EVENT_KEY_DOWN, down, onKeyDownStepDown);
         offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
@@ -798,7 +886,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         if (isArray(state.with)) {
             forEachArray(state.with, (v, k) => {
                 if (isString(v)) {
-                    v = OptionPicker[v];
+                    v = NumberPicker[v];
                 }
                 if (isObject(v) && isFunction(v.detach)) {
                     v.detach.call($, self, state);
@@ -818,11 +906,22 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
     },
     focus: function (mode) {
         let $ = this,
-            {_mask} = $,
+            {_active, _fix} = $;
+        if (!_active && !_fix) {
+            return $;
+        }
+        let {_mask} = $,
             {input} = _mask;
         return focusTo(input), selectTo(input, mode), $;
     },
     reset: function (focus, mode) {
+        let $ = this,
+            {_active} = $;
+        if (!_active) {
+            return $;
+        }
+        $[TOKEN_VALUE] = $['_' + TOKEN_VALUE];
+        return focus ? $.focus(mode) : $;
     }
 });
 

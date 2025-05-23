@@ -1,0 +1,29 @@
+extends ../_index.pug
+
+block state
+  - const scripts = ['../index.min.js']
+  - const styles = ['../index.min.css']
+  - const title = 'Number Picker'
+
+block script
+  script
+    | document.querySelectorAll('input').forEach(self => new NumberPicker(self, true));
+
+block style
+  style
+    | .number-picker__text {
+    |   min-width: 3em;
+    | }
+
+block content
+  main
+    p The lower limit for the input is #[code -25], and the upper limit is #[code 25].
+    form(method='get' target='_blank')
+      p: input(max='25' min='-25' name='test[]' placeholder='0.25' step='0.25' type='number')
+      p: input(max='25' min='-25' name='test[]' placeholder='0.5' step='0.5' type='number')
+      p: input(max='25' min='-25' name='test[]' placeholder='1' step='1' type='number')
+      p: input(max='25' min='-25' name='test[]' placeholder='5' step='5' type='number')
+      p
+        button(type='submit') Submit
+        = ' '
+        button(type='reset') Reset

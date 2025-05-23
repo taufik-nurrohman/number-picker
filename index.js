@@ -93,6 +93,9 @@
     var isArray = function isArray(x) {
         return Array.isArray(x);
     };
+    var isBoolean = function isBoolean(x) {
+        return false === x || true === x;
+    };
     var isDefined = function isDefined(x) {
         return 'undefined' !== typeof x;
     };
@@ -784,6 +787,7 @@
     var EVENT_CUT = 'cut';
     var EVENT_FOCUS = 'focus';
     var EVENT_INPUT = 'input';
+    var EVENT_INPUT_START = 'before' + EVENT_INPUT;
     var EVENT_INVALID = 'invalid';
     var EVENT_KEY = 'key';
     var EVENT_KEY_DOWN = EVENT_KEY + EVENT_DOWN;
@@ -800,6 +804,7 @@
     var KEY_DOWN = 'Down';
     var KEY_LEFT = 'Left';
     var KEY_UP = 'Up';
+    var KEY_A = 'a';
     var KEY_ARROW = 'Arrow';
     var KEY_ARROW_DOWN = KEY_ARROW + KEY_DOWN;
     var KEY_ARROW_LEFT = KEY_ARROW + KEY_LEFT;
@@ -809,10 +814,17 @@
     var KEY_PAGE_DOWN = KEY_PAGE + KEY_DOWN;
     var KEY_PAGE_UP = KEY_PAGE + KEY_UP;
     var KEY_TAB = 'Tab';
+    var TOKEN_CONTENTEDITABLE = 'contenteditable';
+    var TOKEN_DISABLED = 'disabled';
     var TOKEN_FALSE = 'false';
     var TOKEN_INVALID = EVENT_INVALID;
+    var TOKEN_READONLY = 'readonly';
+    var TOKEN_READ_ONLY = 'readOnly';
+    var TOKEN_REQUIRED = 'required';
+    var TOKEN_TABINDEX = 'tabindex';
     var TOKEN_TAB_INDEX = 'tabIndex';
     var TOKEN_TRUE = 'true';
+    var TOKEN_VALUE = 'value';
     var TOKEN_VISIBILITY = 'visibility';
     var _delay = delay(function (picker) {
             letAria(picker.mask, TOKEN_INVALID);
@@ -826,7 +838,7 @@
     var _delay3 = delay(function (picker) {
             var _mask = picker._mask,
                 input = _mask.input;
-            (picker.value = getText(input)) && selectTo(input);
+            (picker[TOKEN_VALUE] = getText(input)) && selectTo(input);
         }),
         _delay4 = _maybeArrayLike(_slicedToArray, _delay3, 1),
         setValuePicker = _delay4[0];
@@ -865,12 +877,13 @@
             state = picker.state,
             value = picker.value,
             strict = state.strict;
+        // Snap number to the nearest step
         value = Math.round(+(value != null ? value : 0) / step) * step + step;
         if (!isNumber(value)) {
             if (strict) {
                 return setError(picker), focusTo($), selectTo($);
             }
-            picker.value = value = step < 0 ? min : max;
+            picker[TOKEN_VALUE] = value = step < 0 ? min : max;
             setAria(mask, 'valuenow', value);
         }
         if (value > max || value < min) {
@@ -881,12 +894,32 @@
         } else {
             letError(0, picker);
         }
+        value += "";
+        // Ensure decimal part in number
+        if (!hasValue('.', value) && 0 !== step % 1) {
+            value += '.' + '0'.repeat(toCount((step + '.').split('.')[1]));
+        }
         setAria(mask, 'valuenow', value);
-        picker.value = value, focusTo($), selectTo($);
+        picker[TOKEN_VALUE] = value, focusTo($), selectTo($);
     }
 
     function focusTo(node) {
         return node.focus(), node;
+    }
+
+    function onBeforeInputTextInput(e) {
+        var $ = this,
+            picker = getReference($),
+            step = picker.step,
+            data = e.data,
+            inputType = e.inputType;
+        var characters = ['-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+        if (0 !== step % 1) {
+            characters.push('.');
+        }
+        if ('insertText' === inputType && !hasValue(data, characters)) {
+            offEventDefault(e);
+        }
     }
 
     function onBlurStepDown() {
@@ -980,7 +1013,8 @@
         } else if ('insertText' === inputType) {
             toggleHintByValue(picker, 1);
         }
-        if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
+        if ('-' === v || '.' === v);
+        else if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
             setError(picker);
             if (!isNumber(value)) {
                 picker.fire('not.number', [v]);
@@ -992,7 +1026,7 @@
                 picker.fire('min.number', [value, min]);
             }
             if (strict) {
-                return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, picker.value), focusTo(input), selectTo(input);
+                return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, picker[TOKEN_VALUE]), focusTo(input), selectTo(input, 1);
             }
         } else {
             letError(0, picker);
@@ -1019,6 +1053,7 @@
             return offEventDefault(e);
         }
         var key = e.key,
+            keyIsCtrl = e.ctrlKey,
             _mask = picker._mask,
             max = picker.max,
             min = picker.min,
@@ -1028,18 +1063,18 @@
             up = _step.up,
             strict = state.strict,
             exit;
-        if (KEY_ARROW_LEFT === key) {
+        if (KEY_ARROW_LEFT === key || keyIsCtrl && KEY_A === key) {
             exit = true;
             focusTo(picker);
         } else if (KEY_ARROW_UP === key) {
             exit = true;
             focusTo(up), cycleValue(up, picker, step, strict && function () {
-                picker.value = max;
+                picker[TOKEN_VALUE] = max;
             });
         } else if (KEY_ARROW_DOWN === key || KEY_ENTER === key || ' ' === key) {
             exit = true;
             cycleValue($, picker, -step, strict && function () {
-                picker.value = min;
+                picker[TOKEN_VALUE] = min;
             });
         }
         exit && offEventDefault(e);
@@ -1057,6 +1092,7 @@
             return offEventDefault(e);
         }
         var key = e.key,
+            keyIsCtrl = e.ctrlKey,
             _mask = picker._mask,
             max = picker.max,
             min = picker.min,
@@ -1066,18 +1102,18 @@
             down = _step.down,
             strict = state.strict,
             exit;
-        if (KEY_ARROW_LEFT === key) {
+        if (KEY_ARROW_LEFT === key || keyIsCtrl && KEY_A === key) {
             exit = true;
             focusTo(picker);
         } else if (KEY_ARROW_DOWN === key) {
             exit = true;
             focusTo(down), cycleValue(down, picker, -step, strict && function () {
-                picker.value = min;
+                picker[TOKEN_VALUE] = min;
             });
         } else if (KEY_ARROW_UP === key || KEY_ENTER === key || ' ' === key) {
             exit = true;
             cycleValue($, picker, step, strict && function () {
-                picker.value = max;
+                picker[TOKEN_VALUE] = max;
             });
         }
         exit && offEventDefault(e);
@@ -1184,7 +1220,7 @@
             time = state.time,
             repeat = time.repeat;
         cycleValue($, picker, -step, strict && function () {
-            picker.value = min, focusTo($);
+            picker[TOKEN_VALUE] = min, focusTo($);
         });
         repeatStart.call($, repeat[0], repeat[1], picker, -step);
     }
@@ -1200,7 +1236,7 @@
             time = state.time,
             repeat = time.repeat;
         cycleValue($, picker, step, strict && function () {
-            picker.value = max, focusTo($);
+            picker[TOKEN_VALUE] = max, focusTo($);
         });
         repeatStart.call($, repeat[0], repeat[1], picker, step);
     }
@@ -1247,12 +1283,12 @@
         // Wheel up
         if (deltaY < 0) {
             cycleValue(up, picker, step, strict && function () {
-                picker.value = max, focusTo(up);
+                picker[TOKEN_VALUE] = max, focusTo(up);
             });
             // Wheel down
         } else {
             cycleValue(down, picker, -step, strict && function () {
-                picker.value = min, focusTo(down);
+                picker[TOKEN_VALUE] = min, focusTo(down);
             });
         }
     }
@@ -1267,7 +1303,9 @@
             return new NumberPicker(self, state);
         }
         setReference(self, hook($, NumberPicker._));
-        return $.attach(self, _fromStates({}, NumberPicker.state, state || {}));
+        return $.attach(self, _fromStates({}, NumberPicker.state, isBoolean(state) ? {
+            strict: state
+        } : state || {}));
     }
     NumberPicker.from = function (self, state) {
         return new NumberPicker(self, state);
@@ -1297,6 +1335,22 @@
                 return this._active;
             },
             set: function set(value) {
+                var $ = this,
+                    _mask = $._mask,
+                    mask = $.mask,
+                    self = $.self,
+                    input = _mask.input,
+                    v = !!value;
+                self[TOKEN_DISABLED] = !($._active = v);
+                if (v) {
+                    letAria(input, TOKEN_DISABLED);
+                    letAria(mask, TOKEN_DISABLED);
+                    setAttribute(input, TOKEN_CONTENTEDITABLE, "");
+                } else {
+                    letAttribute(input, TOKEN_CONTENTEDITABLE);
+                    setAria(input, TOKEN_DISABLED, true);
+                    setAria(mask, TOKEN_DISABLED, true);
+                }
                 return $;
             }
         },
@@ -1304,7 +1358,27 @@
             get: function get() {
                 return this._fix;
             },
-            set: function set(value) {}
+            set: function set(value) {
+                var $ = this,
+                    _mask = $._mask,
+                    mask = $.mask,
+                    self = $.self,
+                    input = _mask.input,
+                    v = !!value;
+                $._active = !($._fix = self[TOKEN_READ_ONLY] = v);
+                if (v) {
+                    letAttribute(input, TOKEN_CONTENTEDITABLE);
+                    setAria(input, TOKEN_READONLY, true);
+                    setAria(mask, TOKEN_READONLY, true);
+                    setAttribute(input, TOKEN_TABINDEX, 0);
+                } else {
+                    letAria(input, TOKEN_READONLY);
+                    letAria(mask, TOKEN_READONLY);
+                    letAttribute(input, TOKEN_TABINDEX);
+                    setAttribute(input, TOKEN_CONTENTEDITABLE, "");
+                }
+                return $;
+            }
         },
         max: {
             get: function get() {
@@ -1401,7 +1475,7 @@
                         $.fire('min.number', [value, min]);
                     }
                     if (strict) {
-                        return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, $.value), $;
+                        return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, $[TOKEN_VALUE]), $;
                     }
                 } else {
                     letError(0, $);
@@ -1414,7 +1488,23 @@
             get: function get() {
                 return this._vital;
             },
-            set: function set(value) {}
+            set: function set(value) {
+                var $ = this,
+                    _mask = $._mask,
+                    mask = $.mask,
+                    self = $.self,
+                    input = _mask.input,
+                    v = !!value;
+                self[TOKEN_REQUIRED] = v;
+                if (v) {
+                    setAria(input, TOKEN_REQUIRED, true);
+                    setAria(mask, TOKEN_REQUIRED, true);
+                } else {
+                    letAria(input, TOKEN_REQUIRED);
+                    letAria(mask, TOKEN_REQUIRED);
+                }
+                return $;
+            }
         }
     });
     NumberPicker._ = setObjectMethods(NumberPicker, {
@@ -1422,7 +1512,6 @@
             var $ = this;
             self = self || $.self;
             state = state || $.state;
-            $._value = null;
             $.self = self;
             $.state = state;
             var _state = state,
@@ -1504,6 +1593,7 @@
             setChildLast(stepFlex, stepUp);
             setChildLast(stepFlex, stepDown);
             onEvent(EVENT_BLUR, stepDown, onBlurStepDown);
+            onEvent(EVENT_INPUT_START, textInput, onBeforeInputTextInput);
             onEvent(EVENT_BLUR, stepUp, onBlurStepUp);
             onEvent(EVENT_BLUR, textInput, onBlurTextInput);
             onEvent(EVENT_CUT, textInput, onCutTextInput);
@@ -1577,12 +1667,12 @@
             setID(textInputHint);
             theInputID && setDatum(mask, 'id', theInputID);
             theInputName && setDatum(mask, 'name', theInputName);
-            theInputValue && ($.value = theInputValue);
+            theInputValue && ($[TOKEN_VALUE] = $['_' + TOKEN_VALUE] = theInputValue);
             // Attach extension(s)
             if (isSet(state) && isArray(state.with)) {
                 forEachArray(state.with, function (v, k) {
                     if (isString(v)) {
-                        v = OptionPicker[v];
+                        v = NumberPicker[v];
                     }
                     // `const Extension = function (self, state = {}) {}`
                     if (isFunction(v)) {
@@ -1595,7 +1685,16 @@
             }
             return $;
         },
-        blur: function blur() {},
+        blur: function blur() {
+            selectToNone();
+            var $ = this,
+                _mask = $._mask,
+                _step = $._step,
+                input = _mask.input,
+                down = _step.down,
+                up = _step.up;
+            return down.blur(), input.blur(), up.blur(), $;
+        },
         detach: function detach() {
             var $ = this,
                 _mask = $._mask,
@@ -1621,6 +1720,7 @@
             offEvent(EVENT_FOCUS, input, onFocusTextInput);
             offEvent(EVENT_FOCUS, self, onFocusSelf);
             offEvent(EVENT_FOCUS, up, onFocusStepUp);
+            offEvent(EVENT_INPUT_START, input, onBeforeInputTextInput);
             offEvent(EVENT_INVALID, self, onInvalidSelf);
             offEvent(EVENT_KEY_DOWN, down, onKeyDownStepDown);
             offEvent(EVENT_KEY_DOWN, input, onKeyDownTextInput);
@@ -1635,7 +1735,7 @@
             if (isArray(state.with)) {
                 forEachArray(state.with, function (v, k) {
                     if (isString(v)) {
-                        v = OptionPicker[v];
+                        v = NumberPicker[v];
                     }
                     if (isObject(v) && isFunction(v.detach)) {
                         v.detach.call($, self, state);
@@ -1655,11 +1755,24 @@
         },
         focus: function focus(mode) {
             var $ = this,
-                _mask = $._mask,
+                _active = $._active,
+                _fix = $._fix;
+            if (!_active && !_fix) {
+                return $;
+            }
+            var _mask = $._mask,
                 input = _mask.input;
             return focusTo(input), selectTo(input, mode), $;
         },
-        reset: function reset(focus, mode) {}
+        reset: function reset(focus, mode) {
+            var $ = this,
+                _active = $._active;
+            if (!_active) {
+                return $;
+            }
+            $[TOKEN_VALUE] = $['_' + TOKEN_VALUE];
+            return focus ? $.focus(mode) : $;
+        }
     });
     return NumberPicker;
 }));
