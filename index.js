@@ -825,6 +825,7 @@
     var TOKEN_TAB_INDEX = 'tabIndex';
     var TOKEN_TRUE = 'true';
     var TOKEN_VALUE = 'value';
+    var TOKEN_VALUENOW = TOKEN_VALUE + 'now';
     var TOKEN_VISIBILITY = 'visibility';
     var _delay = delay(function (picker) {
             letAria(picker.mask, TOKEN_INVALID);
@@ -884,7 +885,7 @@
                 return setError(picker), focusTo($), selectTo($);
             }
             picker[TOKEN_VALUE] = value = step < 0 ? min : max;
-            setAria(mask, 'valuenow', value);
+            setAria(mask, TOKEN_VALUENOW, value);
         }
         if (value > max || value < min) {
             if (strict) {
@@ -896,10 +897,18 @@
         }
         value += "";
         // Ensure decimal part in number
-        if (!hasValue('.', value) && 0 !== step % 1) {
-            value += '.' + '0'.repeat(toCount((step + '.').split('.')[1]));
+        if (0 !== step % 1) {
+            var b = step + "",
+                c = hasValue('.', b) ? toCount(b.split('.')[1]) : 0,
+                d = 0 === c ? '0' : '0'.repeat(c);
+            if (hasValue('.', value)) {
+                value = value.split('.');
+                value = value[0] + '.' + value[1].padEnd(c, d);
+            } else {
+                value += '.' + d;
+            }
         }
-        setAria(mask, 'valuenow', value);
+        setAria(mask, TOKEN_VALUENOW, value);
         picker[TOKEN_VALUE] = value, focusTo($), selectTo($);
     }
 
@@ -913,9 +922,9 @@
             step = picker.step,
             data = e.data,
             inputType = e.inputType;
-        var characters = ['-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+        var characters = '-0123456789';
         if (0 !== step % 1) {
-            characters.push('.');
+            characters += '.';
         }
         if ('insertText' === inputType && !hasValue(data, characters)) {
             offEventDefault(e);
@@ -953,9 +962,9 @@
         toggleHint(1, picker), delay(function () {
             setValue(self, v = getText($));
             if (v && '-' !== v && '.' !== v) {
-                setAria(mask, 'valuenow', v);
+                setAria(mask, TOKEN_VALUENOW, v);
             } else {
-                letAria(mask, 'valuenow');
+                letAria(mask, TOKEN_VALUENOW);
             }
         })[0](1);
     }
@@ -1041,11 +1050,11 @@
             picker.fire('is.number', [value]);
         }
         if (v && '-' !== v && '.' !== v) {
-            setAria(mask, 'valuenow', v);
+            setAria(mask, TOKEN_VALUENOW, v);
         } else {
-            letAria(mask, 'valuenow');
+            letAria(mask, TOKEN_VALUENOW);
         }
-        setValue(self, v), picker.fire('change', ["" !== v ? v : null]);
+        setValue(self, null !== v ? v : ""), picker.fire('change', [v]);
     }
 
     function onInvalidSelf(e) {
@@ -1066,6 +1075,7 @@
             return offEventDefault(e);
         }
         var key = e.key,
+            keyIsAlt = e.altKey,
             keyIsCtrl = e.ctrlKey,
             _mask = picker._mask,
             max = picker.max,
@@ -1081,14 +1091,18 @@
             focusTo(picker);
         } else if (KEY_ARROW_UP === key) {
             exit = true;
-            focusTo(up), cycleValue(up, picker, step, strict && function () {
+            focusTo(up), cycleValue(up, picker, step, strict && function (picker) {
                 picker[TOKEN_VALUE] = max;
             });
         } else if (KEY_ARROW_DOWN === key || KEY_ENTER === key || ' ' === key) {
             exit = true;
-            cycleValue($, picker, -step, strict && function () {
+            cycleValue($, picker, -step, strict && function (picker) {
                 picker[TOKEN_VALUE] = min;
             });
+        } else {
+            if (!keyIsAlt && !keyIsCtrl) {
+                focusTo(picker);
+            }
         }
         exit && offEventDefault(e);
     }
@@ -1105,6 +1119,7 @@
             return offEventDefault(e);
         }
         var key = e.key,
+            keyIsAlt = e.altKey,
             keyIsCtrl = e.ctrlKey,
             _mask = picker._mask,
             max = picker.max,
@@ -1120,14 +1135,18 @@
             focusTo(picker);
         } else if (KEY_ARROW_DOWN === key) {
             exit = true;
-            focusTo(down), cycleValue(down, picker, -step, strict && function () {
+            focusTo(down), cycleValue(down, picker, -step, strict && function (picker) {
                 picker[TOKEN_VALUE] = min;
             });
         } else if (KEY_ARROW_UP === key || KEY_ENTER === key || ' ' === key) {
             exit = true;
-            cycleValue($, picker, step, strict && function () {
+            cycleValue($, picker, step, strict && function (picker) {
                 picker[TOKEN_VALUE] = max;
             });
+        } else {
+            if (!keyIsAlt && !keyIsCtrl) {
+                focusTo(picker);
+            }
         }
         exit && offEventDefault(e);
     }
@@ -1192,9 +1211,9 @@
         delay(function () {
             setValue(self, v = getText($));
             if (v && '-' !== v && '.' !== v) {
-                setAria(mask, 'valuenow', v);
+                setAria(mask, TOKEN_VALUENOW, v);
             } else {
-                letAria(mask, 'valuenow');
+                letAria(mask, TOKEN_VALUENOW);
             }
         })[0](1);
     }
@@ -1243,7 +1262,7 @@
             strict = state.strict,
             time = state.time,
             repeat = time.repeat;
-        cycleValue($, picker, -step, strict && function () {
+        cycleValue($, picker, -step, strict && function (picker) {
             picker[TOKEN_VALUE] = min, focusTo($);
         });
         repeatStart.call($, repeat[0], repeat[1], picker, -step);
@@ -1259,7 +1278,7 @@
             strict = state.strict,
             time = state.time,
             repeat = time.repeat;
-        cycleValue($, picker, step, strict && function () {
+        cycleValue($, picker, step, strict && function (picker) {
             picker[TOKEN_VALUE] = max, focusTo($);
         });
         repeatStart.call($, repeat[0], repeat[1], picker, step);
@@ -1306,12 +1325,12 @@
             deltaY = e.deltaY;
         // Wheel up
         if (deltaY < 0) {
-            cycleValue(up, picker, step, strict && function () {
+            cycleValue(up, picker, step, strict && function (picker) {
                 picker[TOKEN_VALUE] = max, focusTo(up);
             });
             // Wheel down
         } else {
-            cycleValue(down, picker, -step, strict && function () {
+            cycleValue(down, picker, -step, strict && function (picker) {
                 picker[TOKEN_VALUE] = min, focusTo(down);
             });
         }
