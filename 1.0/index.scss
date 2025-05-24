@@ -1,0 +1,151 @@
+$name: 'number-picker';
+
+%item {
+  align-items: center;
+  border: 1px solid;
+  border-color: inherit;
+  display: flex;
+  gap: 0.25em;
+  padding: 0 0.25em;
+}
+
+%items {
+  border-color: inherit;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding: 1px;
+}
+
+.#{$name} {
+  &,
+  & * {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    box-sizing: border-box;
+    color: inherit;
+    font: inherit;
+    outline: 0;
+  }
+}
+
+.#{$name} {
+  border: 1px solid;
+  cursor: text;
+  display: inline-flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  position: relative;
+  user-select: none;
+  vertical-align: middle;
+  &[aria-disabled='true'] {
+    color: rgba(128, 128, 128);
+    cursor: not-allowed;
+    * {
+      pointer-events: none;
+    }
+  }
+  &[aria-invalid='true'] {
+    color: rgb(255, 0, 0);
+  }
+  &__step-down,
+  &__step-up,
+  &__text {
+    @extend %item;
+    overflow: hidden;
+    position: relative;
+  }
+  &__flex {
+    @extend %items;
+    flex: 1;
+    overflow: hidden;
+  }
+  &__self {
+    background: 0 0;
+    border-radius: 0;
+    border: 0;
+    bottom: 0;
+    box-shadow: none;
+    color: transparent;
+    font: 0/0 a;
+    height: 1px;
+    left: 0;
+    margin: 0;
+    opacity: 0;
+    outline: 0;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    text-shadow: none;
+    width: 1px;
+  }
+  &__step {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    &-down,
+    &-up {
+      cursor: pointer;
+      flex: 1;
+      &:focus {
+        outline: 1px solid;
+        outline-offset: -2px;
+      }
+      &::after {
+        border: 0 solid transparent;
+        border-width: 0 0.25em;
+        content: "";
+        display: block;
+        height: 0;
+        width: 0;
+      }
+    }
+    &-down {
+      &::after {
+        border-top: {
+          color: inherit;
+          width: 0.25em;
+        }
+      }
+    }
+    &-up {
+      &::after {
+        border-bottom: {
+          color: inherit;
+          width: 0.25em;
+        }
+      }
+    }
+  }
+  &__text {
+    border-color: transparent;
+    flex: 1;
+    span {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+      // Ensure height even when tag(s) is empty
+      &::after {
+        content: '\200c';
+      }
+      * {
+        display: inline; // Remove (hide) line-break in tag editor
+      }
+      br {
+        display: none;
+      }
+      + span {
+        align-items: center;
+        bottom: 0;
+        display: flex;
+        left: 0;
+        opacity: 0.5;
+        padding: inherit;
+        position: absolute;
+        right: 0;
+        top: 0;
+        white-space: nowrap;
+        z-index: 0;
+      }
+    }
+  }
+}

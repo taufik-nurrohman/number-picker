@@ -1374,7 +1374,7 @@
         },
         'with': []
     };
-    NumberPicker.version = '1.0.1';
+    NumberPicker.version = '1.0.2';
     setObjectAttributes(NumberPicker, {
         name: {
             value: name
