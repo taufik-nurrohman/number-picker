@@ -117,9 +117,9 @@ const picker = new NumberPicker(document.querySelector('input'));</code></pre>
       <h3 id="constructor-number-picker"><a aria-hidden="true" href="#constructor-number-picker">#</a> <code>NumberPicker(self, state)</code></h3>
       <pre><code>const picker = new NumberPicker(self, strict = false);</code></pre>
       <pre><code>const picker = new NumberPicker(self, state = {
-    max: null,
-    min: null,
-    step: null,
+    max: Infinity,
+    min: -Infinity,
+    step: 1,
     strict: false,
     time: {
         error: 1000,

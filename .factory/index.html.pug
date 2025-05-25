@@ -143,9 +143,9 @@ block content
       | const picker = new NumberPicker(self, strict = false);
     pre: code
       | const picker = new NumberPicker(self, state = {
-      |     max: null,
-      |     min: null,
-      |     step: null,
+      |     max: Infinity,
+      |     min: -Infinity,
+      |     step: 1,
       |     strict: false,
       |     time: {
       |         error: 1000,
