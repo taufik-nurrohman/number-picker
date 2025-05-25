@@ -834,22 +834,21 @@
         letError = _delay2[0],
         letErrorAbort = _delay2[1];
     var setError = function setError(picker) {
-        setAria(picker.mask, TOKEN_INVALID, true);
+        var mask = picker.mask,
+            state = picker.state,
+            time = state.time,
+            error = time.error;
+        if (isInteger(error) && error > 0) {
+            setAria(mask, TOKEN_INVALID, true);
+        }
     };
     var _delay3 = delay(function (picker) {
             var _mask = picker._mask,
                 input = _mask.input;
-            (picker[TOKEN_VALUE] = getText(input)) && selectTo(input);
-        }),
-        _delay4 = _maybeArrayLike(_slicedToArray, _delay3, 1),
-        setValuePicker = _delay4[0];
-    var _delay5 = delay(function (picker) {
-            var _mask = picker._mask,
-                input = _mask.input;
             toggleHintByValue(picker, getText(input, 0));
         }),
-        _delay6 = _maybeArrayLike(_slicedToArray, _delay5, 1),
-        toggleHint = _delay6[0];
+        _delay4 = _maybeArrayLike(_slicedToArray, _delay3, 1),
+        toggleHint = _delay4[0];
     var toggleHintByValue = function toggleHintByValue(picker, value) {
         var _mask = picker._mask,
             hint = _mask.hint;
@@ -862,6 +861,29 @@
         _repeat2 = _maybeArrayLike(_slicedToArray, _repeat, 2),
         repeatStart = _repeat2[0],
         repeatStop = _repeat2[1];
+
+    function checkValue(picker) {
+        var _mask = picker._mask,
+            max = picker.max,
+            min = picker.min,
+            step = picker.step,
+            input = _mask.input,
+            v,
+            value = +(v = getText(input)); // Get from the current input
+        if (!isNumber(value)) {
+            return picker.fire('not.number', [v]), 0;
+        }
+        if (0 !== value % step) {
+            return picker.fire('not.step', [value, step]), 0;
+        }
+        if (value < min) {
+            return picker.fire('min.number', [value, min]), 0;
+        }
+        if (value > max) {
+            return picker.fire('max.number', [value, max]), 0;
+        }
+        return picker.fire('is.number', [value]), 1;
+    }
 
     function cycleValue($, picker, step, onStop, onStep) {
         var _active = picker._active,
@@ -985,13 +1007,8 @@
         letErrorAbort();
         var $ = this,
             picker = getReference($),
-            mask = picker.mask,
-            max = picker.max,
-            min = picker.min,
-            step = picker.step,
-            value = +getText($);
-        // Take from the current text
-        if (!isNumber(value) || 0 !== value % step || value > max || value < min) {
+            mask = picker.mask;
+        if (!checkValue(picker)) {
             setError(picker);
         }
         offEvent(EVENT_MOUSE_DOWN, mask, onPointerDownMask);
@@ -1011,16 +1028,10 @@
             return offEventDefault(e);
         }
         var inputType = e.inputType,
-            _mask = picker._mask,
             mask = picker.mask,
-            max = picker.max,
-            min = picker.min,
             self = picker.self,
             state = picker.state,
-            input = _mask.input,
             strict = state.strict,
-            time = state.time,
-            error = time.error,
             v,
             value = +(v = getText($));
         // Take from the current text
@@ -1030,21 +1041,13 @@
             toggleHintByValue(picker, 1);
         }
         if ('-' === v || '.' === v);
-        else if (!isNumber(value) || value > max || value < min) {
+        else if (!checkValue(picker)) {
             setError(picker);
-            if (!isNumber(value)) {
-                picker.fire('not.number', [v]);
-            } else if (value > max) {
-                picker.fire('max.number', [value, max]);
-            } else if (value < min) {
-                picker.fire('min.number', [value, min]);
-            }
             if (strict) {
-                return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, picker[TOKEN_VALUE]), focusTo(input), selectTo(input, 1);
+                return;
             }
         } else {
             letError(0, picker);
-            picker.fire('is.number', [value]);
         }
         if (v && '-' !== v && '.' !== v) {
             setAria(mask, TOKEN_VALUENOW, v);
@@ -1203,17 +1206,28 @@
         var $ = this,
             picker = getReference($),
             mask = picker.mask,
-            self = picker.self,
-            v;
-        setValuePicker(1, picker), insertAtSelection($, e.clipboardData.getData('text/plain'));
-        delay(function () {
-            setValue(self, v = getText($));
-            if (v && '-' !== v && '.' !== v) {
-                setAria(mask, TOKEN_VALUENOW, v);
-            } else {
-                letAria(mask, TOKEN_VALUENOW);
-            }
-        })[0](1);
+            state = picker.state,
+            time = state.time,
+            error = time.error,
+            v = getText($),
+            vv,
+            wasError;
+        insertAtSelection($, e.clipboardData.getData('text/plain'));
+        if (!isNumber(+(vv = getText($)))) {
+            wasError = true;
+            setText($, null !== v ? v : ""); // Restore previous text
+        }
+        picker[TOKEN_VALUE] = v = getText($);
+        if (v) {
+            setAria(mask, TOKEN_VALUENOW, v);
+        } else {
+            letAria(mask, TOKEN_VALUENOW);
+        }
+        focusTo($), selectTo($);
+        if (wasError) {
+            letErrorAbort(), setError(picker), letError(isInteger(error) && error > 0 ? error : 0, picker);
+            picker.fire('not.number', [vv]);
+        }
     }
 
     function onPointerDownMask(e) {
@@ -1304,25 +1318,11 @@
     function onSubmitForm(e) {
         var $ = this,
             picker = getReference($),
-            max = picker.max,
-            min = picker.min,
-            self = picker.self,
-            state = picker.state,
-            step = picker.step,
-            value = picker.value,
-            strict = state.strict;
-        value = +value;
-        if (strict && 0 !== value % step) {
-            exit = true;
-            picker.fire('not.step', [value, step]);
-        } else if (value < min) {
-            exit = true;
-            picker.fire('min.number', [value, min]);
-        } else if (value > max) {
-            exit = true;
-            picker.fire('max.number', [value, max]);
+            self = picker.self;
+        picker.value;
+        if (!checkValue(picker)) {
+            onInvalidSelf.call(self), offEventDefault(e);
         }
-        exit && (onInvalidSelf.call(self), offEventDefault(e));
     }
 
     function onWheelMask(e) {
@@ -1489,7 +1489,6 @@
                 return getText(this._mask.input);
             },
             set: function set(value) {
-                selectToNone();
                 var $ = this,
                     _active = $._active,
                     _fix = $._fix;
@@ -1508,7 +1507,6 @@
                 return "" !== value ? value : null;
             },
             set: function set(value) {
-                selectToNone();
                 var $ = this,
                     _active = $._active,
                     v;
@@ -1517,8 +1515,6 @@
                 }
                 value = +(v = (value != null ? value : "") + "");
                 var _mask = $._mask,
-                    max = $.max,
-                    min = $.min,
                     self = $.self,
                     state = $.state,
                     input = _mask.input,
@@ -1526,21 +1522,13 @@
                     time = state.time,
                     error = time.error;
                 setText(input, v), toggleHintByValue($, v);
-                if (!isNumber(value) || value > max || value < min) {
+                if (!checkValue($)) {
                     setError($);
-                    if (!isNumber(value)) {
-                        $.fire('not.number', [v]);
-                    } else if (value > max) {
-                        $.fire('max.number', [value, max]);
-                    } else if (value < min) {
-                        $.fire('min.number', [value, min]);
-                    }
                     if (strict) {
-                        return letError(isInteger(error) && error > 0 ? error : 0, picker), setText(input, $[TOKEN_VALUE]), $;
+                        return letError(isInteger(error) && error > 0 ? error : 0, $), setText(input, $[TOKEN_VALUE]), $;
                     }
                 } else {
                     letError(0, $);
-                    $.fire('is.number', [value]);
                 }
                 return setValue(self, v), $.fire('change', ["" !== v ? v : null]);
             }
