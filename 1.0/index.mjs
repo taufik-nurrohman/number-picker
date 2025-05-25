@@ -449,7 +449,7 @@ function onPointerDownStepDown(e) {
     cycleValue($, picker, -step, strict && function (picker) {
         (picker[TOKEN_VALUE] = min), focusTo($);
     });
-    repeatStart($, repeat[0], repeat[1], picker, -step);
+    repeatStart(repeat[0], repeat[1], $, picker, -step);
     onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
     onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
 }
@@ -464,7 +464,7 @@ function onPointerDownStepUp(e) {
     cycleValue($, picker, step, strict && function (picker) {
         (picker[TOKEN_VALUE] = max), focusTo($);
     });
-    repeatStart($, repeat[0], repeat[1], picker, step);
+    repeatStart(repeat[0], repeat[1], $, picker, step);
     onEvent(EVENT_MOUSE_UP, R, onPointerUpRoot);
     onEvent(EVENT_TOUCH_END, R, onPointerUpRoot);
 }
