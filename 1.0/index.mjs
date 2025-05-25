@@ -563,7 +563,7 @@ NumberPicker.state = {
     'with': []
 };
 
-NumberPicker.version = '1.0.3';
+NumberPicker.version = '1.0.4';
 
 setObjectAttributes(NumberPicker, {
     name: {
