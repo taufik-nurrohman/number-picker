@@ -9,6 +9,9 @@ import {isArray, isBoolean, isFunction, isInstance, isInteger, isNumber, isObjec
 import {offEvent, offEventDefault, onEvent} from '@taufik-nurrohman/event';
 import {toCount} from '@taufik-nurrohman/to';
 
+const {floor: mathFloor, max: mathMax, min: mathMin, round: mathRound} = Math;
+const {isFinite} = Number;
+
 const EVENT_DOWN = 'down';
 const EVENT_UP = 'up';
 
@@ -112,20 +115,14 @@ function checkValue(picker) {
 
 function cycleValue($, picker, step, onStop, onStep) {
     let {_active, _fix} = picker;
-    if (_fix) {
-        return focusTo(picker);
-    }
-    if (!_active) {
-        return;
+    if (!_active || _fix) {
+        return _fix && focusTo(picker);
     }
     let {mask, max, min, state, value} = picker,
         {strict} = state;
-    // Snap number to the nearest step
-    value = (Math.round(+(value ?? 0) / step) * step) + step;
+    // Snap number to the nearest multiple of `step`
+    value = (mathRound(+(value ?? 0) / step) * step) + step;
     if (!isNumber(value)) {
-        if (strict) {
-            return setError(picker), focusTo($), selectTo($);
-        }
         picker[TOKEN_VALUE] = value = step < 0 ? min : max;
         setAria(mask, TOKEN_VALUENOW, value);
     }
@@ -239,14 +236,10 @@ function onInputTextInput(e) {
         picker = getReference($),
         {_active, _fix} = picker;
     if (!_active || _fix) {
-        if (_fix) {
-            focusTo(picker);
-        }
-        return offEventDefault(e);
+        return (_fix && focusTo(picker)), offEventDefault(e);
     }
     let {inputType} = e,
-        {mask, self, state} = picker,
-        {strict} = state, v,
+        {mask, self} = picker, v,
         value = +(v = getText($)); // Take from the current text
     if ('deleteContent' === inputType.slice(0, 13) && 0 === value) {
         toggleHintByValue(picker, 0);
@@ -257,9 +250,6 @@ function onInputTextInput(e) {
         // About to type a negative or floating-point number…
     } else if (!checkValue(picker)) {
         setError(picker);
-        if (strict) {
-            return;
-        }
     } else {
         letError(0, picker);
     }
@@ -282,10 +272,7 @@ function onKeyDownStepDown(e) {
         picker = getReference($),
         {_active, _fix} = picker;
     if (!_active || _fix) {
-        if (_fix) {
-            focusTo(picker);
-        }
-        return offEventDefault(e);
+        return (_fix && focusTo(picker)), offEventDefault(e);
     }
     let key = e.key,
         keyIsAlt = e.altKey,
@@ -321,10 +308,7 @@ function onKeyDownStepUp(e) {
         picker = getReference($),
         {_active, _fix} = picker;
     if (!_active || _fix) {
-        if (_fix) {
-            focusTo(picker);
-        }
-        return offEventDefault(e);
+        return (_fix && focusTo(picker)), offEventDefault(e);
     }
     let key = e.key,
         keyIsAlt = e.altKey,
@@ -360,10 +344,7 @@ function onKeyDownTextInput(e) {
         picker = getReference($),
         {_active, _fix} = picker;
     if (!_active || _fix) {
-        if (_fix) {
-            focusTo(picker);
-        }
-        return;
+        return _fix && focusTo(picker);
     }
     let key = e.key,
         keyIsAlt = e.altKey,
@@ -427,10 +408,7 @@ function onPointerDownMask(e) {
         picker = getReference($),
         {_active, _fix} = picker;
     if (!_active || _fix) {
-        if (_fix) {
-            focusTo(picker);
-        }
-        return;
+        return _fix && focusTo(picker);
     }
     let {_mask, mask} = picker,
         {_step} = _mask,
@@ -500,8 +478,7 @@ function onResetForm() {
 function onSubmitForm(e) {
     let $ = this,
         picker = getReference($),
-        {self, value} = picker;
-    value = +value;
+        {self} = picker;
     if (!checkValue(picker)) {
         onInvalidSelf.call(self), offEventDefault(e);
     }
@@ -563,7 +540,7 @@ NumberPicker.state = {
     'with': []
 };
 
-NumberPicker.version = '1.0.4';
+NumberPicker.version = '1.0.5';
 
 setObjectAttributes(NumberPicker, {
     name: {
@@ -623,35 +600,31 @@ setObjectAttributes(NumberPicker, {
     max: {
         get: function () {
             let {max, step} = this.state;
-            step = step ?? 1;
-            return Infinity === (max = +max) || (isNumber(max) && 0 === (max % step)) ? max : Infinity;
+            return !isFinite(max) && max > 0 || (isNumber(max) && 0 === (max % step)) ? max : Infinity;
         },
         set: function (value) {
             let $ = this,
                 {state} = $,
                 {step} = state;
-            step = step ?? 1;
             return (state.max = isNumber(value = +value) && 0 === (value % step) ? value : Infinity), $;
         }
     },
     min: {
         get: function () {
             let {min, step} = this.state;
-            step = step ?? 1;
-            return -Infinity === (min = +min) || (isNumber(min) && 0 === (min % step)) ? min : -Infinity;
+            return !isFinite(min) && min < 0 || (isNumber(min) && 0 === (min % step)) ? min : -Infinity;
         },
         set: function (value) {
             let $ = this,
                 {state} = $,
                 {step} = state;
-            step = step ?? 1;
             return (state.min = isNumber(value = +value) && 0 === (value % step) ? value : -Infinity), $;
         }
     },
     step: {
         get: function () {
             let {step} = this.state;
-            return isNumber(step = +step) && step > 0 ? step : 1;
+            return isNumber(step) && step > 0 ? step : 1;
         },
         set: function (value) {
             let $ = this,
@@ -685,17 +658,16 @@ setObjectAttributes(NumberPicker, {
             if (!_active) {
                 return $;
             }
-            value = +(v = (value ?? "") + "");
+            value = +(v = fromValue(value ?? ""));
             let {_mask, self, state} = $,
                 {input} = _mask,
-                {strict, time} = state,
-                {error} = time;
+                {strict} = state;
             setText(input, v), toggleHintByValue($, v);
             if (!checkValue($)) {
-                setError($);
                 if (strict) {
-                    return letError(isInteger(error) && error > 0 ? error : 0, $), setText(input, $[TOKEN_VALUE]), $;
+                    return setText(input, $[TOKEN_VALUE]), $;
                 }
+                setError($);
             } else {
                 letError(0, $);
             }
@@ -732,7 +704,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         state = state || $.state;
         $.self = self;
         $.state = state;
-        let {max, min, n, step} = state,
+        let {max, min, n, step} = state, value,
             isDisabledSelf = isDisabled(self),
             isReadOnlySelf = isReadOnly(self),
             isRequiredSelf = isRequired(self),
@@ -746,6 +718,57 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         $._active = !isDisabledSelf;
         $._fix = isReadOnlySelf;
         $._vital = isRequiredSelf;
+        $['_' + TOKEN_VALUE] = theInputValue;
+        if (!isSet(max) || !isNumber(max)) {
+            if (!theInputMax || !isNumber(max = +theInputMax)) {
+                max = Infinity;
+            }
+        }
+        if (!isSet(min) || !isNumber(min)) {
+            if (!theInputMin || !isNumber(min = +theInputMin)) {
+                min = -Infinity;
+            }
+        }
+        if (!isSet(step) || !isNumber(step)) {
+            if (!theInputStep || !isNumber(step = +theInputStep) || step < 0) {
+                step = 1;
+            }
+        }
+        if (!theInputValue || !isNumber(value = +theInputValue)) {
+            value = null;
+        }
+        // Snap `max` and `min` to the nearest multiple of `step`
+        max = mathRound(max / step) * step;
+        min = mathRound(min / step) * step;
+        if (isFinite(max) && isFinite(min)) {
+            // Adjust `max` so that `max - min` is a multiple of `step`
+            max = min + (mathFloor((max - min) / step) * step);
+            // Snap `value` to the nearest multiple of `step`
+            if (null !== value) {
+                // Clamp between `min` and `max`
+                value = mathMax(min, mathMin(max, value));
+                // Subtract `min` to make snapping relative to start
+                value = min + mathRound((value - min) / step) * step;
+                // Clamp between `min` and `max` again, in case rounding pushes out of bound(s)
+                value = mathMax(min, mathMin(max, value));
+            }
+        }
+        if (isFinite(state.max = max)) {
+            self.max = max;
+        } else {
+            letAttribute(self, 'max');
+        }
+        if (isFinite(state.min = min)) {
+            self.min = min;
+        } else {
+            letAttribute(self, 'min');
+        }
+        if (isFinite(state.step = step) && step > 0) {
+            self.step = step;
+        } else {
+            letAttribute(self, 'step');
+        }
+        setValue(self, value);
         const stepDown = setElement('span', {
             'class': n + '__step-down',
             'tabindex': -1
@@ -766,9 +789,9 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
                 'disabled': isDisabledSelf ? TOKEN_TRUE : false,
                 'readonly': isReadOnlySelf ? TOKEN_TRUE : false,
                 'required': isRequiredSelf ? TOKEN_TRUE : false,
-                'valuemax': theInputMax ? theInputMax : false,
-                'valuemin': theInputMin ? theInputMin : false,
-                'valuenow': theInputValue ? theInputValue : false
+                'valuemax': Infinity !== max ? max : false,
+                'valuemin': -Infinity !== min ? min : false,
+                'valuenow': null !== value ? value : false
             },
             'class': n,
             'role': 'spinbutton'
@@ -781,7 +804,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         const text = setElement('span', {
             'class': n + '__text'
         });
-        const textInput = setElement('span', {
+        const textInput = setElement('span', value = fromValue(value ?? ""), {
             'aria': {
                 'disabled': isDisabledSelf ? TOKEN_TRUE : false,
                 'multiline': TOKEN_FALSE,
@@ -857,16 +880,6 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
             self: mask,
             step: stepFlex
         };
-        // Re-assign some state value(s) using the setter to either normalize or reject the initial value
-        $.max = max = "" !== theInputMax ? theInputMax : (max ?? Infinity);
-        $.min = min = "" !== theInputMin ? theInputMin : (min ?? -Infinity);
-        $.step = step = "" !== theInputStep ? theInputStep : (step ?? 1);
-        let {_active} = $;
-        // Force the `this._active` value to `true` to set the initial value
-        $._active = true;
-        theInputValue && ($[TOKEN_VALUE] = $['_' + TOKEN_VALUE] = theInputValue);
-        // After the initial value has been set, restore the previous `this._active` value
-        $._active = _active;
         // Force `id` attribute(s)
         setAria(mask, 'labelledby', getID(setID(text)));
         setAria(self, 'hidden', true);
@@ -880,6 +893,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         setID(textInputHint);
         theInputID && setDatum(mask, 'id', theInputID);
         theInputName && setDatum(mask, 'name', theInputName);
+        toggleHintByValue($, value);
         // Attach extension(s)
         if (isSet(state) && isArray(state.with)) {
             forEachArray(state.with, (v, k) => {

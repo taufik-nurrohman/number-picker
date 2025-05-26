@@ -785,6 +785,7 @@
         mathMax = Math.max,
         mathMin = Math.min,
         mathRound = Math.round;
+    var isFinite = Number.isFinite;
     var EVENT_DOWN = 'down';
     var EVENT_UP = 'up';
     var EVENT_BLUR = 'blur';
@@ -1025,8 +1026,6 @@
         var inputType = e.inputType,
             mask = picker.mask,
             self = picker.self,
-            state = picker.state,
-            strict = state.strict,
             v,
             value = +(v = getText($));
         // Take from the current text
@@ -1038,9 +1037,6 @@
         if ('-' === v || '.' === v);
         else if (!checkValue(picker)) {
             setError(picker);
-            if (strict) {
-                return;
-            }
         } else {
             letError(0, picker);
         }
@@ -1302,7 +1298,6 @@
         var $ = this,
             picker = getReference($),
             self = picker.self;
-        picker.value;
         if (!checkValue(picker)) {
             onInvalidSelf.call(self), offEventDefault(e);
         }
@@ -1429,7 +1424,7 @@
                 var _this$state = this.state,
                     max = _this$state.max,
                     step = _this$state.step;
-                return Infinity === max || isNumber(max) && 0 === max % step ? max : Infinity;
+                return !isFinite(max) && max > 0 || isNumber(max) && 0 === max % step ? max : Infinity;
             },
             set: function set(value) {
                 var $ = this,
@@ -1443,7 +1438,7 @@
                 var _this$state2 = this.state,
                     min = _this$state2.min,
                     step = _this$state2.step;
-                return -Infinity === min || isNumber(min) && 0 === min % step ? min : -Infinity;
+                return !isFinite(min) && min < 0 || isNumber(min) && 0 === min % step ? min : -Infinity;
             },
             set: function set(value) {
                 var $ = this,
@@ -1576,32 +1571,40 @@
                     step = 1;
                 }
             }
-            // Snap number(s) to the nearest multiple of `step`
+            if (!theInputValue || !isNumber(value = +theInputValue)) {
+                value = null;
+            }
+            // Snap `max` and `min` to the nearest multiple of `step`
             max = mathRound(max / step) * step;
             min = mathRound(min / step) * step;
-            // Validate `max` and `min` value
-            if (min > max) {
-                var _ref = [min, max];
-                max = _ref[0];
-                min = _ref[1];
-            }
-            // Adjust `max` so that `max - min` is a multiple of `step`
-            max = min + mathFloor((max - min) / step) * step;
-            // Snap value to the nearest multiple of `step`
-            if (null !== (value = theInputValue)) {
-                if (!isNumber(value = +theInputValue)) {
-                    value = 0;
+            if (isFinite(max) && isFinite(min)) {
+                // Adjust `max` so that `max - min` is a multiple of `step`
+                max = min + mathFloor((max - min) / step) * step;
+                // Snap `value` to the nearest multiple of `step`
+                if (null !== value) {
+                    // Clamp between `min` and `max`
+                    value = mathMax(min, mathMin(max, value));
+                    // Subtract `min` to make snapping relative to start
+                    value = min + mathRound((value - min) / step) * step;
+                    // Clamp between `min` and `max` again, in case rounding pushes out of bound(s)
+                    value = mathMax(min, mathMin(max, value));
                 }
-                // Clamp between `min` and `max`
-                value = mathMax(min, mathMin(max, value));
-                // Subtract `min` to make snapping relative to start
-                value = min + mathRound((value - min) / step) * step;
-                // Clamp between `min` and `max` again, in case rounding pushes out of bound(s)
-                value = mathMax(min, mathMin(max, value));
             }
-            self.max = Infinity !== (state.max = max) ? max : "";
-            self.min = -Infinity !== (state.min = min) ? min : "";
-            self.step = state.step = step;
+            if (isFinite(state.max = max)) {
+                self.max = max;
+            } else {
+                letAttribute(self, 'max');
+            }
+            if (isFinite(state.min = min)) {
+                self.min = min;
+            } else {
+                letAttribute(self, 'min');
+            }
+            if (isFinite(state.step = step) && step > 0) {
+                self.step = step;
+            } else {
+                letAttribute(self, 'step');
+            }
             setValue(self, value);
             var stepDown = setElement('span', {
                 'class': n + '__step-down',
@@ -1638,7 +1641,7 @@
             var text = setElement('span', {
                 'class': n + '__text'
             });
-            var textInput = setElement('span', value != null ? value : "", {
+            var textInput = setElement('span', value = _fromValue(value != null ? value : ""), {
                 'aria': {
                     'disabled': isDisabledSelf ? TOKEN_TRUE : false,
                     'multiline': TOKEN_FALSE,
@@ -1727,6 +1730,7 @@
             setID(textInputHint);
             theInputID && setDatum(mask, 'id', theInputID);
             theInputName && setDatum(mask, 'name', theInputName);
+            toggleHintByValue($, value);
             // Attach extension(s)
             if (isSet(state) && isArray(state.with)) {
                 forEachArray(state.with, function (v, k) {

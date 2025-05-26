@@ -10,6 +10,7 @@ import {offEvent, offEventDefault, onEvent} from '@taufik-nurrohman/event';
 import {toCount} from '@taufik-nurrohman/to';
 
 const {floor: mathFloor, max: mathMax, min: mathMin, round: mathRound} = Math;
+const {isFinite} = Number;
 
 const EVENT_DOWN = 'down';
 const EVENT_UP = 'up';
@@ -238,8 +239,7 @@ function onInputTextInput(e) {
         return (_fix && focusTo(picker)), offEventDefault(e);
     }
     let {inputType} = e,
-        {mask, self, state} = picker,
-        {strict} = state, v,
+        {mask, self} = picker, v,
         value = +(v = getText($)); // Take from the current text
     if ('deleteContent' === inputType.slice(0, 13) && 0 === value) {
         toggleHintByValue(picker, 0);
@@ -250,9 +250,6 @@ function onInputTextInput(e) {
         // About to type a negative or floating-point number…
     } else if (!checkValue(picker)) {
         setError(picker);
-        if (strict) {
-            return;
-        }
     } else {
         letError(0, picker);
     }
@@ -481,8 +478,7 @@ function onResetForm() {
 function onSubmitForm(e) {
     let $ = this,
         picker = getReference($),
-        {self, value} = picker;
-    value = +value;
+        {self} = picker;
     if (!checkValue(picker)) {
         onInvalidSelf.call(self), offEventDefault(e);
     }
@@ -604,7 +600,7 @@ setObjectAttributes(NumberPicker, {
     max: {
         get: function () {
             let {max, step} = this.state;
-            return Infinity === max || (isNumber(max) && 0 === (max % step)) ? max : Infinity;
+            return !isFinite(max) && max > 0 || (isNumber(max) && 0 === (max % step)) ? max : Infinity;
         },
         set: function (value) {
             let $ = this,
@@ -616,7 +612,7 @@ setObjectAttributes(NumberPicker, {
     min: {
         get: function () {
             let {min, step} = this.state;
-            return -Infinity === min || (isNumber(min) && 0 === (min % step)) ? min : -Infinity;
+            return !isFinite(min) && min < 0 || (isNumber(min) && 0 === (min % step)) ? min : -Infinity;
         },
         set: function (value) {
             let $ = this,
@@ -738,30 +734,40 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
                 step = 1;
             }
         }
-        // Snap number(s) to the nearest multiple of `step`
+        if (!theInputValue || !isNumber(value = +theInputValue)) {
+            value = null;
+        }
+        // Snap `max` and `min` to the nearest multiple of `step`
         max = mathRound(max / step) * step;
         min = mathRound(min / step) * step;
-        // Validate `max` and `min` value
-        if (min > max) {
-            [max, min] = [min, max];
-        }
-        // Adjust `max` so that `max - min` is a multiple of `step`
-        max = min + (mathFloor((max - min) / step) * step);
-        // Snap value to the nearest multiple of `step`
-        if (null !== (value = theInputValue)) {
-            if (!isNumber(value = +theInputValue)) {
-                value = 0;
+        if (isFinite(max) && isFinite(min)) {
+            // Adjust `max` so that `max - min` is a multiple of `step`
+            max = min + (mathFloor((max - min) / step) * step);
+            // Snap `value` to the nearest multiple of `step`
+            if (null !== value) {
+                // Clamp between `min` and `max`
+                value = mathMax(min, mathMin(max, value));
+                // Subtract `min` to make snapping relative to start
+                value = min + mathRound((value - min) / step) * step;
+                // Clamp between `min` and `max` again, in case rounding pushes out of bound(s)
+                value = mathMax(min, mathMin(max, value));
             }
-            // Clamp between `min` and `max`
-            value = mathMax(min, mathMin(max, value));
-            // Subtract `min` to make snapping relative to start
-            value = min + mathRound((value - min) / step) * step;
-            // Clamp between `min` and `max` again, in case rounding pushes out of bound(s)
-            value = mathMax(min, mathMin(max, value));
         }
-        self.max = Infinity !== (state.max = max) ? max : "";
-        self.min = -Infinity !== (state.min = min) ? min : "";
-        self.step = state.step = step;
+        if (isFinite(state.max = max)) {
+            self.max = max;
+        } else {
+            letAttribute(self, 'max');
+        }
+        if (isFinite(state.min = min)) {
+            self.min = min;
+        } else {
+            letAttribute(self, 'min');
+        }
+        if (isFinite(state.step = step) && step > 0) {
+            self.step = step;
+        } else {
+            letAttribute(self, 'step');
+        }
         setValue(self, value);
         const stepDown = setElement('span', {
             'class': n + '__step-down',
@@ -798,7 +804,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         const text = setElement('span', {
             'class': n + '__text'
         });
-        const textInput = setElement('span', value ?? "", {
+        const textInput = setElement('span', value = fromValue(value ?? ""), {
             'aria': {
                 'disabled': isDisabledSelf ? TOKEN_TRUE : false,
                 'multiline': TOKEN_FALSE,
@@ -887,6 +893,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         setID(textInputHint);
         theInputID && setDatum(mask, 'id', theInputID);
         theInputName && setDatum(mask, 'name', theInputName);
+        toggleHintByValue($, value);
         // Attach extension(s)
         if (isSet(state) && isArray(state.with)) {
             forEachArray(state.with, (v, k) => {

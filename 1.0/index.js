@@ -781,6 +781,11 @@
         }
         node.addEventListener(name, then, options);
     };
+    var mathFloor = Math.floor,
+        mathMax = Math.max,
+        mathMin = Math.min,
+        mathRound = Math.round;
+    var isFinite = Number.isFinite;
     var EVENT_DOWN = 'down';
     var EVENT_UP = 'up';
     var EVENT_BLUR = 'blur';
@@ -888,11 +893,8 @@
     function cycleValue($, picker, step, onStop, onStep) {
         var _active = picker._active,
             _fix = picker._fix;
-        if (_fix) {
-            return focusTo(picker);
-        }
-        if (!_active) {
-            return;
+        if (!_active || _fix) {
+            return _fix && focusTo(picker);
         }
         var mask = picker.mask,
             max = picker.max,
@@ -900,12 +902,9 @@
             state = picker.state,
             value = picker.value,
             strict = state.strict;
-        // Snap number to the nearest step
-        value = Math.round(+(value != null ? value : 0) / step) * step + step;
+        // Snap number to the nearest multiple of `step`
+        value = mathRound(+(value != null ? value : 0) / step) * step + step;
         if (!isNumber(value)) {
-            if (strict) {
-                return setError(picker), focusTo($), selectTo($);
-            }
             picker[TOKEN_VALUE] = value = step < 0 ? min : max;
             setAria(mask, TOKEN_VALUENOW, value);
         }
@@ -1022,16 +1021,11 @@
             _active = picker._active,
             _fix = picker._fix;
         if (!_active || _fix) {
-            if (_fix) {
-                focusTo(picker);
-            }
-            return offEventDefault(e);
+            return _fix && focusTo(picker), offEventDefault(e);
         }
         var inputType = e.inputType,
             mask = picker.mask,
             self = picker.self,
-            state = picker.state,
-            strict = state.strict,
             v,
             value = +(v = getText($));
         // Take from the current text
@@ -1043,9 +1037,6 @@
         if ('-' === v || '.' === v);
         else if (!checkValue(picker)) {
             setError(picker);
-            if (strict) {
-                return;
-            }
         } else {
             letError(0, picker);
         }
@@ -1069,10 +1060,7 @@
             _active = picker._active,
             _fix = picker._fix;
         if (!_active || _fix) {
-            if (_fix) {
-                focusTo(picker);
-            }
-            return offEventDefault(e);
+            return _fix && focusTo(picker), offEventDefault(e);
         }
         var key = e.key,
             keyIsAlt = e.altKey,
@@ -1114,10 +1102,7 @@
             _active = picker._active,
             _fix = picker._fix;
         if (!_active || _fix) {
-            if (_fix) {
-                focusTo(picker);
-            }
-            return offEventDefault(e);
+            return _fix && focusTo(picker), offEventDefault(e);
         }
         var key = e.key,
             keyIsAlt = e.altKey,
@@ -1159,10 +1144,7 @@
             _active = picker._active,
             _fix = picker._fix;
         if (!_active || _fix) {
-            if (_fix) {
-                focusTo(picker);
-            }
-            return;
+            return _fix && focusTo(picker);
         }
         var key = e.key,
             keyIsAlt = e.altKey,
@@ -1237,10 +1219,7 @@
             _active = picker._active,
             _fix = picker._fix;
         if (!_active || _fix) {
-            if (_fix) {
-                focusTo(picker);
-            }
-            return;
+            return _fix && focusTo(picker);
         }
         var _mask = picker._mask,
             mask = picker.mask,
@@ -1319,7 +1298,6 @@
         var $ = this,
             picker = getReference($),
             self = picker.self;
-        picker.value;
         if (!checkValue(picker)) {
             onInvalidSelf.call(self), offEventDefault(e);
         }
@@ -1382,7 +1360,7 @@
         },
         'with': []
     };
-    NumberPicker.version = '1.0.4';
+    NumberPicker.version = '1.0.5';
     setObjectAttributes(NumberPicker, {
         name: {
             value: name
@@ -1446,14 +1424,12 @@
                 var _this$state = this.state,
                     max = _this$state.max,
                     step = _this$state.step;
-                step = step != null ? step : 1;
-                return Infinity === (max = +max) || isNumber(max) && 0 === max % step ? max : Infinity;
+                return !isFinite(max) && max > 0 || isNumber(max) && 0 === max % step ? max : Infinity;
             },
             set: function set(value) {
                 var $ = this,
                     state = $.state,
                     step = state.step;
-                step = step != null ? step : 1;
                 return state.max = isNumber(value = +value) && 0 === value % step ? value : Infinity, $;
             }
         },
@@ -1462,21 +1438,19 @@
                 var _this$state2 = this.state,
                     min = _this$state2.min,
                     step = _this$state2.step;
-                step = step != null ? step : 1;
-                return -Infinity === (min = +min) || isNumber(min) && 0 === min % step ? min : -Infinity;
+                return !isFinite(min) && min < 0 || isNumber(min) && 0 === min % step ? min : -Infinity;
             },
             set: function set(value) {
                 var $ = this,
                     state = $.state,
                     step = state.step;
-                step = step != null ? step : 1;
                 return state.min = isNumber(value = +value) && 0 === value % step ? value : -Infinity, $;
             }
         },
         step: {
             get: function get() {
                 var step = this.state.step;
-                return isNumber(step = +step) && step > 0 ? step : 1;
+                return isNumber(step) && step > 0 ? step : 1;
             },
             set: function set(value) {
                 var $ = this,
@@ -1513,20 +1487,18 @@
                 if (!_active) {
                     return $;
                 }
-                value = +(v = (value != null ? value : "") + "");
+                value = +(v = _fromValue(value != null ? value : ""));
                 var _mask = $._mask,
                     self = $.self,
                     state = $.state,
                     input = _mask.input,
-                    strict = state.strict,
-                    time = state.time,
-                    error = time.error;
+                    strict = state.strict;
                 setText(input, v), toggleHintByValue($, v);
                 if (!checkValue($)) {
-                    setError($);
                     if (strict) {
-                        return letError(isInteger(error) && error > 0 ? error : 0, $), setText(input, $[TOKEN_VALUE]), $;
+                        return setText(input, $[TOKEN_VALUE]), $;
                     }
+                    setError($);
                 } else {
                     letError(0, $);
                 }
@@ -1569,6 +1541,7 @@
                 min = _state.min,
                 n = _state.n,
                 step = _state.step,
+                value,
                 isDisabledSelf = isDisabled(self),
                 isReadOnlySelf = isReadOnly(self),
                 isRequiredSelf = isRequired(self),
@@ -1582,6 +1555,57 @@
             $._active = !isDisabledSelf;
             $._fix = isReadOnlySelf;
             $._vital = isRequiredSelf;
+            $['_' + TOKEN_VALUE] = theInputValue;
+            if (!isSet(max) || !isNumber(max)) {
+                if (!theInputMax || !isNumber(max = +theInputMax)) {
+                    max = Infinity;
+                }
+            }
+            if (!isSet(min) || !isNumber(min)) {
+                if (!theInputMin || !isNumber(min = +theInputMin)) {
+                    min = -Infinity;
+                }
+            }
+            if (!isSet(step) || !isNumber(step)) {
+                if (!theInputStep || !isNumber(step = +theInputStep) || step < 0) {
+                    step = 1;
+                }
+            }
+            if (!theInputValue || !isNumber(value = +theInputValue)) {
+                value = null;
+            }
+            // Snap `max` and `min` to the nearest multiple of `step`
+            max = mathRound(max / step) * step;
+            min = mathRound(min / step) * step;
+            if (isFinite(max) && isFinite(min)) {
+                // Adjust `max` so that `max - min` is a multiple of `step`
+                max = min + mathFloor((max - min) / step) * step;
+                // Snap `value` to the nearest multiple of `step`
+                if (null !== value) {
+                    // Clamp between `min` and `max`
+                    value = mathMax(min, mathMin(max, value));
+                    // Subtract `min` to make snapping relative to start
+                    value = min + mathRound((value - min) / step) * step;
+                    // Clamp between `min` and `max` again, in case rounding pushes out of bound(s)
+                    value = mathMax(min, mathMin(max, value));
+                }
+            }
+            if (isFinite(state.max = max)) {
+                self.max = max;
+            } else {
+                letAttribute(self, 'max');
+            }
+            if (isFinite(state.min = min)) {
+                self.min = min;
+            } else {
+                letAttribute(self, 'min');
+            }
+            if (isFinite(state.step = step) && step > 0) {
+                self.step = step;
+            } else {
+                letAttribute(self, 'step');
+            }
+            setValue(self, value);
             var stepDown = setElement('span', {
                 'class': n + '__step-down',
                 'tabindex': -1
@@ -1602,9 +1626,9 @@
                     'disabled': isDisabledSelf ? TOKEN_TRUE : false,
                     'readonly': isReadOnlySelf ? TOKEN_TRUE : false,
                     'required': isRequiredSelf ? TOKEN_TRUE : false,
-                    'valuemax': theInputMax ? theInputMax : false,
-                    'valuemin': theInputMin ? theInputMin : false,
-                    'valuenow': theInputValue ? theInputValue : false
+                    'valuemax': Infinity !== max ? max : false,
+                    'valuemin': -Infinity !== min ? min : false,
+                    'valuenow': null !== value ? value : false
                 },
                 'class': n,
                 'role': 'spinbutton'
@@ -1617,7 +1641,7 @@
             var text = setElement('span', {
                 'class': n + '__text'
             });
-            var textInput = setElement('span', {
+            var textInput = setElement('span', value = _fromValue(value != null ? value : ""), {
                 'aria': {
                     'disabled': isDisabledSelf ? TOKEN_TRUE : false,
                     'multiline': TOKEN_FALSE,
@@ -1693,16 +1717,6 @@
                 self: mask,
                 step: stepFlex
             };
-            // Re-assign some state value(s) using the setter to either normalize or reject the initial value
-            $.max = max = "" !== theInputMax ? theInputMax : max != null ? max : Infinity;
-            $.min = min = "" !== theInputMin ? theInputMin : min != null ? min : -Infinity;
-            $.step = step = "" !== theInputStep ? theInputStep : step != null ? step : 1;
-            var _active = $._active;
-            // Force the `this._active` value to `true` to set the initial value
-            $._active = true;
-            theInputValue && ($[TOKEN_VALUE] = $['_' + TOKEN_VALUE] = theInputValue);
-            // After the initial value has been set, restore the previous `this._active` value
-            $._active = _active;
             // Force `id` attribute(s)
             setAria(mask, 'labelledby', getID(setID(text)));
             setAria(self, 'hidden', true);
@@ -1716,6 +1730,7 @@
             setID(textInputHint);
             theInputID && setDatum(mask, 'id', theInputID);
             theInputName && setDatum(mask, 'name', theInputName);
+            toggleHintByValue($, value);
             // Attach extension(s)
             if (isSet(state) && isArray(state.with)) {
                 forEachArray(state.with, function (v, k) {
