@@ -4,4 +4,6 @@
 .gitattributes export-ignore
 .github export-ignore
 .gitignore export-ignore
+1.png export-ignore
+2.png export-ignore
 README.md export-ignore
