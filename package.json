@@ -10,13 +10,13 @@
     "@taufik-nurrohman/has": "^1.0.0",
     "@taufik-nurrohman/hook": "^1.2.2",
     "@taufik-nurrohman/is": "^1.0.5",
-    "@taufik-nurrohman/selection": "^1.1.0",
+    "@taufik-nurrohman/selection": "^2.0.1",
     "@taufik-nurrohman/tick": "^2.1.1",
     "@taufik-nurrohman/to": "^1.2.0"
   },
   "description": "Accessible custom `<input type=\"number\">` element.",
   "devDependencies": {
-    "@taufik-nurrohman/factory": "^2.2.5"
+    "@taufik-nurrohman/factory": "^2.3.1"
   },
   "exports": {
     "import": "./index.mjs",
@@ -52,5 +52,5 @@
   "scripts": {
     "pack": "pack --clean=false --from=.factory --js-format=umd --js-name=NumberPicker --js-top='%(js.license)' --mjs=true --scss=true --to=."
   },
-  "version": "1.0.5"
+  "version": "1.0.6"
 }

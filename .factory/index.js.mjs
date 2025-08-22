@@ -1,7 +1,7 @@
 import {/* focusTo, */insertAtSelection, selectTo, selectToNone} from '@taufik-nurrohman/selection';
 import {R, getElement, getID, getParent, getParentForm, getText, getValue, isDisabled, isReadOnly, isRequired, letAria, letAttribute, letClass, letElement, letStyle, setAria, setAttribute, setChildLast, setClass, setDatum, setElement, setID, setNext, setStyle, setText, setValue} from '@taufik-nurrohman/document';
 import {delay, repeat} from '@taufik-nurrohman/tick';
-import {forEachArray, getReference, setObjectAttributes, setObjectMethods, setReference} from '@taufik-nurrohman/f';
+import {forEachArray, forEachSet, getReference, setObjectAttributes, setObjectMethods, setReference} from '@taufik-nurrohman/f';
 import {fromStates, fromValue} from '@taufik-nurrohman/from';
 import {hasValue} from '@taufik-nurrohman/has';
 import {hook} from '@taufik-nurrohman/hook';
@@ -472,7 +472,7 @@ function onPointerUpRoot() {
 }
 
 function onResetForm() {
-    getReference(this).reset();
+    forEachSet(getReference(this), $ => $.reset());
 }
 
 function onSubmitForm(e) {
@@ -856,10 +856,12 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         setNext(self, mask);
         setChildLast(mask, self);
         if (form) {
+            let set = getReference(form) || new Set;
+            set.add($);
             onEvent(EVENT_RESET, form, onResetForm);
             onEvent(EVENT_SUBMIT, form, onSubmitForm);
             setID(form);
-            setReference(form, $);
+            setReference(form, set);
         }
         onEvent(EVENT_FOCUS, self, onFocusSelf);
         onEvent(EVENT_INVALID, self, onInvalidSelf);

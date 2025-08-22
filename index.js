@@ -251,6 +251,10 @@
         }
         return x;
     };
+
+    function _toIterator(v) {
+        return v[Symbol.iterator]();
+    }
     var forEachArray = function forEachArray(array, at) {
         for (var i = 0, j = toCount(array), v; i < j; ++i) {
             v = at.call(array, array[i], i);
@@ -284,6 +288,22 @@
         }
         return object;
     };
+    var forEachSet = function forEachSet(set, at) {
+        var items = _toIterator(set),
+            item = items.next();
+        while (!item.done) {
+            var k = void 0,
+                v = item.value;
+            v = at.call(set, v, k = v);
+            if (-1 === v) {
+                letValueInMap(k, set);
+            } else if (0 === v) {
+                break;
+            }
+            item = items.next();
+        }
+        return set;
+    };
     var getPrototype = function getPrototype(of) {
         return of.prototype;
     };
@@ -292,6 +312,9 @@
     };
     var getValueInMap = function getValueInMap(k, map) {
         return map.get(k);
+    };
+    var letValueInMap = function letValueInMap(k, map) {
+        return map.delete(k);
     };
     var setObjectAttributes = function setObjectAttributes(of, attributes, asStaticAttributes) {
         if (!asStaticAttributes) {
@@ -570,37 +593,42 @@
     var _setRange = function _setRange() {
         return D.createRange();
     };
+    // The `node` parameter is currently not in use
+    var hasSelection = function hasSelection(node, selection) {
+        return (selection || _getSelection()).rangeCount > 0;
+    };
     // <https://stackoverflow.com/a/6691294/1163000>
     // The `node` parameter is currently not in use
     var insertAtSelection = function insertAtSelection(node, content, mode, selection) {
         selection = selection || _getSelection();
         var from, range, to;
-        if (selection.rangeCount) {
-            range = selection.getRangeAt(0);
-            range.deleteContents();
-            to = D.createDocumentFragment();
-            var nodeCurrent, nodeFirst, nodeLast;
-            if (isString(content)) {
-                from = setElement('div');
-                setHTML(from, content);
-                while (nodeCurrent = getChildFirst(from, 1)) {
-                    nodeLast = setChildLast(to, nodeCurrent);
-                }
-            } else if (isArray(content)) {
-                forEachArray(content, function (v) {
-                    return nodeLast = setChildLast(to, v);
-                });
-            } else {
-                nodeLast = setChildLast(to, content);
+        if (!hasSelection(node, selection)) {
+            return false;
+        }
+        range = selection.getRangeAt(0);
+        range.deleteContents();
+        to = D.createDocumentFragment();
+        var nodeCurrent, nodeFirst, nodeLast;
+        if (isString(content)) {
+            from = setElement('div');
+            setHTML(from, content);
+            while (nodeCurrent = getChildFirst(from, 1)) {
+                nodeLast = setChildLast(to, nodeCurrent);
             }
-            nodeFirst = getChildFirst(to, 1);
-            range.insertNode(to);
-            if (nodeLast) {
-                range = range.cloneRange();
-                range.setStartAfter(nodeLast);
-                range.setStartBefore(nodeFirst);
-                setSelection(node, range, selectToNone(selection));
-            }
+        } else if (isArray(content)) {
+            forEachArray(content, function (v) {
+                return nodeLast = setChildLast(to, v);
+            });
+        } else {
+            nodeLast = setChildLast(to, content);
+        }
+        nodeFirst = getChildFirst(to, 1);
+        range.insertNode(to);
+        if (nodeLast) {
+            range = range.cloneRange();
+            range.setStartAfter(nodeLast);
+            range.setStartBefore(nodeFirst);
+            setSelection(node, range, selectToNone(node, selection));
         }
         return selection;
     };
@@ -651,7 +679,8 @@
             selection.collapseToStart();
         } else;
     };
-    var selectToNone = function selectToNone(selection) {
+    // The `node` parameter is currently not in use
+    var selectToNone = function selectToNone(node, selection) {
         selection = selection || _getSelection();
         // selection.removeAllRanges();
         if (selection.rangeCount) {
@@ -1291,7 +1320,9 @@
     }
 
     function onResetForm() {
-        getReference(this).reset();
+        forEachSet(getReference(this), function ($) {
+            return $.reset();
+        });
     }
 
     function onSubmitForm(e) {
@@ -1360,7 +1391,7 @@
         },
         'with': []
     };
-    NumberPicker.version = '1.0.5';
+    NumberPicker.version = '1.0.6';
     setObjectAttributes(NumberPicker, {
         name: {
             value: name
@@ -1693,10 +1724,12 @@
             setNext(self, mask);
             setChildLast(mask, self);
             if (form) {
+                var set = getReference(form) || new Set();
+                set.add($);
                 onEvent(EVENT_RESET, form, onResetForm);
                 onEvent(EVENT_SUBMIT, form, onSubmitForm);
                 setID(form);
-                setReference(form, $);
+                setReference(form, set);
             }
             onEvent(EVENT_FOCUS, self, onFocusSelf);
             onEvent(EVENT_INVALID, self, onInvalidSelf);
