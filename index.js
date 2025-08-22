@@ -366,6 +366,18 @@
     var getElement = function getElement(query, scope) {
         return (scope || D).querySelector(query);
     };
+    var getHTML = function getHTML(node, trim) {
+        if (trim === void 0) {
+            trim = true;
+        }
+        var state = 'innerHTML';
+        if (!hasState(node, state)) {
+            return false;
+        }
+        var content = node[state];
+        content = trim ? content.trim() : content;
+        return "" !== content ? content : null;
+    };
     var getID = function getID(node, batch) {
         if (batch === void 0) {
             batch = 'e:';
@@ -587,6 +599,9 @@
         return node.value = _fromValue(value), node;
     };
     var theID = {};
+    var now = Date.now;
+    var history = new WeakMap();
+    var historyIndex = new WeakMap();
     var _getSelection = function _getSelection() {
         return D.getSelection();
     };
@@ -637,6 +652,23 @@
         selection = selection || _getSelection();
         return selection.empty(), selection;
     };
+    var redoState = function redoState(node, selection) {
+        var _getValueInMap, _getValueInMap2;
+        var h = (_getValueInMap = getValueInMap(node, history)) != null ? _getValueInMap : [],
+            i = (_getValueInMap2 = getValueInMap(node, historyIndex)) != null ? _getValueInMap2 : toCount(h) - 1,
+            j;
+        if (!(j = h[i + 1])) {
+            return restoreSelection(node, h[i][1], selection);
+        }
+        i++;
+        setValueInMap(node, i, historyIndex);
+        return setHTML(node, j[0]), restoreSelection(node, j[1], selection);
+    };
+    var resetState = function resetState(node, selection) {
+        letValueInMap(node, history);
+        letValueInMap(node, historyIndex);
+        return saveState(node, selection);
+    };
     // <https://stackoverflow.com/a/13950376/1163000>
     var restoreSelection = function restoreSelection(node, store, selection) {
         var index = 0,
@@ -667,6 +699,34 @@
         }
         return setSelection(node, range, letSelection(node, selection));
     };
+    // <https://stackoverflow.com/a/13950376/1163000>
+    var saveSelection = function saveSelection(node, selection) {
+        var range = (_getSelection()).getRangeAt(0),
+            rangeClone = range.cloneRange();
+        rangeClone.selectNodeContents(node);
+        rangeClone.setEnd(range.startContainer, range.startOffset);
+        var start = toCount(rangeClone + "");
+        return [start, start + toCount(range + "")];
+    };
+    var saveState = function saveState(node, selection) {
+        var _getValueInMap3, _getValueInMap4, _getHTML;
+        var h = (_getValueInMap3 = getValueInMap(node, history)) != null ? _getValueInMap3 : [],
+            i = (_getValueInMap4 = getValueInMap(node, historyIndex)) != null ? _getValueInMap4 : toCount(h) - 1,
+            j,
+            v = (_getHTML = getHTML(node)) != null ? _getHTML : "";
+        j = hasSelection(node, selection) ? saveSelection(node) : [];
+        if (h[i] && v === h[i][0] && j[0] === h[i][1][0] && j[1] === h[i][1][1]) {
+            return node; // No change
+        }
+        // Trim future history if `undoState()` was used
+        if (i < toCount(h) - 1) {
+            h.splice(i + 1);
+        }
+        h.push([v, j, now()]);
+        setValueInMap(node, h, history);
+        setValueInMap(node, ++i, historyIndex);
+        return node;
+    };
     var selectTo = function selectTo(node, mode, selection) {
         selection = selection || _getSelection();
         letSelection(node, selection);
@@ -695,6 +755,18 @@
             return restoreSelection(node, range, selection);
         }
         return selection.addRange(range), selection;
+    };
+    var undoState = function undoState(node, selection) {
+        var _getValueInMap5, _getValueInMap6;
+        var h = (_getValueInMap5 = getValueInMap(node, history)) != null ? _getValueInMap5 : [],
+            i = (_getValueInMap6 = getValueInMap(node, historyIndex)) != null ? _getValueInMap6 : toCount(h) - 1,
+            j;
+        if (!(j = h[i - 1])) {
+            return restoreSelection(node, h[i][1], selection);
+        }
+        i--;
+        setValueInMap(node, i, historyIndex);
+        return setHTML(node, j[0]), restoreSelection(node, j[1], selection);
     };
 
     function _toArray(iterable) {
@@ -848,6 +920,8 @@
     var KEY_PAGE_DOWN = KEY_PAGE + KEY_DOWN;
     var KEY_PAGE_UP = KEY_PAGE + KEY_UP;
     var KEY_TAB = 'Tab';
+    var KEY_Y = 'y';
+    var KEY_Z = 'z';
     var TOKEN_CONTENTEDITABLE = 'contenteditable';
     var TOKEN_DISABLED = 'disabled';
     var TOKEN_FALSE = 'false';
@@ -876,13 +950,18 @@
             setAria(mask, TOKEN_INVALID, true);
         }
     };
-    var _delay3 = delay(function (picker) {
+    var _delay3 = delay(function ($) {
+            saveState($);
+        }, 1),
+        _delay4 = _maybeArrayLike(_slicedToArray, _delay3, 1),
+        saveStateLazy = _delay4[0];
+    var _delay5 = delay(function (picker) {
             var _mask = picker._mask,
                 input = _mask.input;
             toggleHintByValue(picker, getText(input, 0));
         }),
-        _delay4 = _maybeArrayLike(_slicedToArray, _delay3, 1),
-        toggleHint = _delay4[0];
+        _delay6 = _maybeArrayLike(_slicedToArray, _delay5, 1),
+        toggleHint = _delay6[0];
     var toggleHintByValue = function toggleHintByValue(picker, value) {
         var _mask = picker._mask,
             hint = _mask.hint;
@@ -925,11 +1004,13 @@
         if (!_active || _fix) {
             return _fix && focusTo(picker);
         }
-        var mask = picker.mask,
+        var _mask = picker._mask,
+            mask = picker.mask,
             max = picker.max,
             min = picker.min,
             state = picker.state,
             value = picker.value,
+            input = _mask.input,
             strict = state.strict;
         // Snap number to the nearest multiple of `step`
         value = mathRound(+(value != null ? value : 0) / step) * step + step;
@@ -959,7 +1040,7 @@
             }
         }
         setAria(mask, TOKEN_VALUENOW, value);
-        picker[TOKEN_VALUE] = value, focusTo($), selectTo($);
+        picker[TOKEN_VALUE] = value, focusTo($), selectTo($), saveState(input);
     }
 
     function focusTo(node) {
@@ -1009,7 +1090,7 @@
             mask = picker.mask,
             self = picker.self,
             v;
-        toggleHint(1, picker), delay(function () {
+        saveState($), toggleHint(1, picker), saveStateLazy($), delay(function () {
             setValue(self, v = getText($));
             if (v && '-' !== v && '.' !== v) {
                 setAria(mask, TOKEN_VALUENOW, v);
@@ -1059,9 +1140,9 @@
             value = +(v = getText($));
         // Take from the current text
         if ('deleteContent' === inputType.slice(0, 13) && 0 === value) {
-            toggleHintByValue(picker, 0);
+            toggleHintByValue(picker, 0), saveStateLazy($);
         } else if ('insertText' === inputType) {
-            toggleHintByValue(picker, 1);
+            toggleHintByValue(picker, 1), saveStateLazy($);
         }
         if ('-' === v || '.' === v);
         else if (!checkValue(picker)) {
@@ -1094,16 +1175,29 @@
         var key = e.key,
             keyIsAlt = e.altKey,
             keyIsCtrl = e.ctrlKey,
+            keyIsShift = e.shiftKey,
             _mask = picker._mask,
             max = picker.max,
             min = picker.min,
             state = picker.state,
             step = picker.step,
             _step = _mask._step,
+            input = _mask.input,
             up = _step.up,
             strict = state.strict,
             exit;
-        if (KEY_ARROW_LEFT === key || keyIsCtrl && KEY_A === key) {
+        if (keyIsCtrl) {
+            if (KEY_A === key) {
+                exit = true;
+                focusTo(picker);
+            } else if (!keyIsShift && KEY_Z === toCaseLower(key)) {
+                exit = true;
+                undoState(input), focusTo(input), selectTo(input), toggleHint(0, picker);
+            } else if (keyIsShift && KEY_Z === toCaseLower(key) || KEY_Y === toCaseLower(key)) {
+                exit = true;
+                redoState(input), focusTo(input), selectTo(input), toggleHint(0, picker);
+            }
+        } else if (KEY_ARROW_LEFT === key) {
             exit = true;
             focusTo(picker);
         } else if (KEY_ARROW_UP === key) {
@@ -1136,16 +1230,29 @@
         var key = e.key,
             keyIsAlt = e.altKey,
             keyIsCtrl = e.ctrlKey,
+            keyIsShift = e.shiftKey,
             _mask = picker._mask,
             max = picker.max,
             min = picker.min,
             state = picker.state,
             step = picker.step,
             _step = _mask._step,
+            input = _mask.input,
             down = _step.down,
             strict = state.strict,
             exit;
-        if (KEY_ARROW_LEFT === key || keyIsCtrl && KEY_A === key) {
+        if (keyIsCtrl) {
+            if (KEY_A === key) {
+                exit = true;
+                focusTo(picker);
+            } else if (!keyIsShift && KEY_Z === toCaseLower(key)) {
+                exit = true;
+                undoState(input), focusTo(input), selectTo(input), toggleHint(0, picker);
+            } else if (keyIsShift && KEY_Z === toCaseLower(key) || KEY_Y === toCaseLower(key)) {
+                exit = true;
+                redoState(input), focusTo(input), selectTo(input), toggleHint(0, picker);
+            }
+        } else if (KEY_ARROW_LEFT === key) {
             exit = true;
             focusTo(picker);
         } else if (KEY_ARROW_DOWN === key) {
@@ -1188,8 +1295,15 @@
             form,
             submit;
         if (keyIsAlt);
-        else if (keyIsCtrl);
-        else if (keyIsShift) {
+        else if (keyIsCtrl) {
+            if (!keyIsShift && KEY_Z === toCaseLower(key)) {
+                exit = true;
+                undoState($), focusTo($), selectTo($), toggleHint(0, picker);
+            } else if (keyIsShift && KEY_Z === toCaseLower(key) || KEY_Y === toCaseLower(key)) {
+                exit = true;
+                redoState($), focusTo($), selectTo($), toggleHint(0, picker);
+            }
+        } else if (keyIsShift) {
             if (KEY_TAB === key) {
                 selectToNone();
             }
@@ -1223,7 +1337,7 @@
             v = getText($),
             vv,
             wasError;
-        insertAtSelection($, e.clipboardData.getData('text/plain'));
+        saveState($), insertAtSelection($, e.clipboardData.getData('text/plain')), saveStateLazy($);
         if (!isNumber(+(vv = getText($)))) {
             wasError = true;
             setText($, null !== v ? v : ""); // Restore previous text
@@ -1779,7 +1893,7 @@
                     }
                 });
             }
-            return $;
+            return resetState(textInput), $;
         },
         blur: function blur() {
             selectToNone();

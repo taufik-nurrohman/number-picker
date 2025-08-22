@@ -1,13 +1,13 @@
-import {/* focusTo, */insertAtSelection, selectTo, selectToNone} from '@taufik-nurrohman/selection';
+import {/* focusTo, */insertAtSelection, redoState, resetState, saveState, selectTo, selectToNone, undoState} from '@taufik-nurrohman/selection';
 import {R, getElement, getID, getParent, getParentForm, getText, getValue, isDisabled, isReadOnly, isRequired, letAria, letAttribute, letClass, letElement, letStyle, setAria, setAttribute, setChildLast, setClass, setDatum, setElement, setID, setNext, setStyle, setText, setValue} from '@taufik-nurrohman/document';
 import {delay, repeat} from '@taufik-nurrohman/tick';
-import {forEachArray, getReference, setObjectAttributes, setObjectMethods, setReference} from '@taufik-nurrohman/f';
+import {forEachArray, forEachSet, getReference, setObjectAttributes, setObjectMethods, setReference} from '@taufik-nurrohman/f';
 import {fromStates, fromValue} from '@taufik-nurrohman/from';
 import {hasValue} from '@taufik-nurrohman/has';
 import {hook} from '@taufik-nurrohman/hook';
 import {isArray, isBoolean, isFunction, isInstance, isInteger, isNumber, isObject, isSet, isString} from '@taufik-nurrohman/is';
 import {offEvent, offEventDefault, onEvent} from '@taufik-nurrohman/event';
-import {toCount} from '@taufik-nurrohman/to';
+import {toCaseLower, toCount} from '@taufik-nurrohman/to';
 
 const {floor: mathFloor, max: mathMax, min: mathMin, round: mathRound} = Math;
 const {isFinite} = Number;
@@ -48,6 +48,8 @@ const KEY_PAGE = 'Page';
 const KEY_PAGE_DOWN = KEY_PAGE + KEY_DOWN;
 const KEY_PAGE_UP = KEY_PAGE + KEY_UP;
 const KEY_TAB = 'Tab';
+const KEY_Y = 'y';
+const KEY_Z = 'z';
 
 const TOKEN_CONTENTEDITABLE = 'contenteditable';
 const TOKEN_DISABLED = 'disabled';
@@ -75,6 +77,10 @@ const setError = function (picker) {
         setAria(mask, TOKEN_INVALID, true);
     }
 };
+
+const [saveStateLazy] = delay(function ($) {
+    saveState($);
+}, 1);
 
 const [toggleHint] = delay(function (picker) {
     let {_mask} = picker,
@@ -118,7 +124,8 @@ function cycleValue($, picker, step, onStop, onStep) {
     if (!_active || _fix) {
         return _fix && focusTo(picker);
     }
-    let {mask, max, min, state, value} = picker,
+    let {_mask, mask, max, min, state, value} = picker,
+        {input} = _mask,
         {strict} = state;
     // Snap number to the nearest multiple of `step`
     value = (mathRound(+(value ?? 0) / step) * step) + step;
@@ -148,7 +155,7 @@ function cycleValue($, picker, step, onStop, onStep) {
         }
     }
     setAria(mask, TOKEN_VALUENOW, value);
-    (picker[TOKEN_VALUE] = value), focusTo($), selectTo($), (onStep && onStep(picker));
+    (picker[TOKEN_VALUE] = value), focusTo($), selectTo($), saveState(input), (onStep && onStep(picker));
 }
 
 function focusTo(node) {
@@ -195,7 +202,7 @@ function onCutTextInput(e) {
     let $ = this,
         picker = getReference($),
         {mask, self} = picker, v;
-    toggleHint(1, picker), delay(() => {
+    saveState($), toggleHint(1, picker), saveStateLazy($), delay(() => {
         setValue(self, v = getText($));
         if (v && '-' !== v && '.' !== v) {
             setAria(mask, TOKEN_VALUENOW, v);
@@ -242,9 +249,9 @@ function onInputTextInput(e) {
         {mask, self} = picker, v,
         value = +(v = getText($)); // Take from the current text
     if ('deleteContent' === inputType.slice(0, 13) && 0 === value) {
-        toggleHintByValue(picker, 0);
+        toggleHintByValue(picker, 0), saveStateLazy($);
     } else if ('insertText' === inputType) {
-        toggleHintByValue(picker, 1);
+        toggleHintByValue(picker, 1), saveStateLazy($);
     }
     if ('-' === v || '.' === v) {
         // About to type a negative or floating-point number…
@@ -277,11 +284,23 @@ function onKeyDownStepDown(e) {
     let key = e.key,
         keyIsAlt = e.altKey,
         keyIsCtrl = e.ctrlKey,
+        keyIsShift = e.shiftKey,
         {_mask, max, min, state, step} = picker,
-        {_step} = _mask,
+        {_step, input} = _mask,
         {up} = _step,
         {strict} = state, exit;
-    if (KEY_ARROW_LEFT === key || keyIsCtrl && KEY_A === key) {
+    if (keyIsCtrl) {
+        if (KEY_A === key) {
+            exit = true;
+            focusTo(picker);
+        } else if (!keyIsShift && KEY_Z === toCaseLower(key)) {
+            exit = true;
+            undoState(input), focusTo(input), selectTo(input), toggleHint(0, picker);
+        } else if (keyIsShift && KEY_Z === toCaseLower(key) || KEY_Y === toCaseLower(key)) {
+            exit = true;
+            redoState(input), focusTo(input), selectTo(input), toggleHint(0, picker);
+        }
+    } else if (KEY_ARROW_LEFT === key) {
         exit = true;
         focusTo(picker);
     } else if (KEY_ARROW_UP === key) {
@@ -313,11 +332,23 @@ function onKeyDownStepUp(e) {
     let key = e.key,
         keyIsAlt = e.altKey,
         keyIsCtrl = e.ctrlKey,
+        keyIsShift = e.shiftKey,
         {_mask, max, min, state, step} = picker,
-        {_step} = _mask,
+        {_step, input} = _mask,
         {down} = _step,
         {strict} = state, exit;
-    if (KEY_ARROW_LEFT === key || keyIsCtrl && KEY_A === key) {
+    if (keyIsCtrl) {
+        if (KEY_A === key) {
+            exit = true;
+            focusTo(picker);
+        } else if (!keyIsShift && KEY_Z === toCaseLower(key)) {
+            exit = true;
+            undoState(input), focusTo(input), selectTo(input), toggleHint(0, picker);
+        } else if (keyIsShift && KEY_Z === toCaseLower(key) || KEY_Y === toCaseLower(key)) {
+            exit = true;
+            redoState(input), focusTo(input), selectTo(input), toggleHint(0, picker);
+        }
+    } else if (KEY_ARROW_LEFT === key) {
         exit = true;
         focusTo(picker);
     } else if (KEY_ARROW_DOWN === key) {
@@ -353,7 +384,15 @@ function onKeyDownTextInput(e) {
         {_mask, self} = picker,
         {_step} = _mask,
         {down, up} = _step, exit, form, submit;
-    if (keyIsAlt) {} else if (keyIsCtrl) {} else if (keyIsShift) {
+    if (keyIsAlt) {} else if (keyIsCtrl) {
+        if (!keyIsShift && KEY_Z === toCaseLower(key)) {
+            exit = true;
+            undoState($), focusTo($), selectTo($), toggleHint(0, picker);
+        } else if (keyIsShift && KEY_Z === toCaseLower(key) || KEY_Y === toCaseLower(key)) {
+            exit = true;
+            redoState($), focusTo($), selectTo($), toggleHint(0, picker);
+        }
+    } else if (keyIsShift) {
         if (KEY_TAB === key) {
             selectToNone();
         }
@@ -384,7 +423,7 @@ function onPasteTextInput(e) {
         {time} = state,
         {error} = time,
         v = getText($), vv, wasError;
-    insertAtSelection($, e.clipboardData.getData('text/plain'));
+    saveState($), insertAtSelection($, e.clipboardData.getData('text/plain')), saveStateLazy($);
     if (!isNumber(+(vv = getText($)))) {
         wasError = true;
         setText($, null !== v ? v : ""); // Restore previous text
@@ -472,7 +511,7 @@ function onPointerUpRoot() {
 }
 
 function onResetForm() {
-    getReference(this).reset();
+    forEachSet(getReference(this), $ => $.reset());
 }
 
 function onSubmitForm(e) {
@@ -540,7 +579,7 @@ NumberPicker.state = {
     'with': []
 };
 
-NumberPicker.version = '1.0.5';
+NumberPicker.version = '1.0.6';
 
 setObjectAttributes(NumberPicker, {
     name: {
@@ -856,10 +895,12 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
         setNext(self, mask);
         setChildLast(mask, self);
         if (form) {
+            let set = getReference(form) || new Set;
+            set.add($);
             onEvent(EVENT_RESET, form, onResetForm);
             onEvent(EVENT_SUBMIT, form, onSubmitForm);
             setID(form);
-            setReference(form, $);
+            setReference(form, set);
         }
         onEvent(EVENT_FOCUS, self, onFocusSelf);
         onEvent(EVENT_INVALID, self, onInvalidSelf);
@@ -909,7 +950,7 @@ NumberPicker._ = setObjectMethods(NumberPicker, {
                 }
             });
         }
-        return $;
+        return resetState(textInput), $;
     },
     blur: function () {
         selectToNone();
